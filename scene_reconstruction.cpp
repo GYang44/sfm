@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
     sfmEnv workEnv("../setting.xml");
     if (!workEnv.sample(5))
     {
+        std::cout << "cannot read configure file" << std::endl; 
         return -1;
     }
 
