@@ -39,40 +39,64 @@ int main(int argc, char* argv[])
 {
     // Read input parameters
     //sfmEnviroment wkEnv(std::string("../setting.xml"));
-
-    if(cv::cuda::getCudaEnabledDeviceCount())
-    {
-        cv::cuda::printCudaDeviceInfo(0);
-    }
-
-    cv::namedWindow("cudaFeature", cv::WINDOW_OPENGL);
-    //cv::cuda::setGlDevice();
-
-    cv::cuda::setDevice(0);
-
     environment workEnv("../setting.xml");
 
+    //create new window set device
+    cv::namedWindow("cudaFeature", cv::WINDOW_OPENGL);
+    cv::cuda::setDevice(0);
+
+    //create feature detector
     cv::Ptr<cv::cuda::ORB> CudaDetector = cv::cuda::ORB::create(500, 1.2f, 8, 31, 0, 2, 0, 31, 20, true);
+
+    //tmp variable for frame handling
     cv::cuda::GpuMat newFrameGpu, newFrameGpuGray;
     cv::Mat newFrame;
+
+    //feature descriptors for each frame
     cv::cuda::GpuMat newFrameFeature;
-    std::vector<std::vector<cv::KeyPoint>> KeyPoint;
-    std::vector<cv::Mat> descriptor;
+    //keypoints for entire video
+    std::vector<std::vector<cv::KeyPoint>> keyPoints;
+    //feature descriptors for entire video
+    std::vector<cv::cuda::GpuMat> descriptors;
+    //all matches
+    std::vector<std::vector<std::vector<cv::DMatch>>> matchs;
+
+    cv::Ptr<cv::cuda::DescriptorMatcher> matcher = cv::cuda::DescriptorMatcher::createBFMatcher(cv::NORM_HAMMING);
+
+    cv::Mat oldFrame, drawFrame;
+
     while(workEnv.video.grab())
     {
         workEnv.video.retrieve(newFrame);
         newFrameGpu.upload(newFrame);
         cv::cuda::cvtColor(newFrameGpu, newFrameGpuGray, CV_RGB2GRAY);
+
+        //detect keypoints and compute descriptors
         std::vector<cv::KeyPoint> frameKeypoints;
-        cv::cuda::GpuMat frameDescriptor;
+        cv::cuda::GpuMat frameDescriptors;
+        CudaDetector -> detectAndCompute(newFrameGpuGray, cv::cuda::GpuMat(), frameKeypoints, frameDescriptors);
 
-        CudaDetector -> detectAndCompute(newFrameGpuGray, cv::cuda::GpuMat(), frameKeypoints, frameDescriptor);
-        cv::drawKeypoints( newFrame, frameKeypoints, newFrame, cv::Scalar::all(-1), cv::DrawMatchesFlags::DEFAULT );
-        newFrameGpu.upload(newFrame);
-        cv::imshow("cudaFeature", newFrameGpu);
-        cv::waitKey(10);
+        //
+        descriptors.push_back(frameDescriptors);
+        keyPoints.push_back(frameKeypoints);
+
+        //matches in from the new frame
+        cv::cuda::GpuMat newMatchsGpu;
+        std::vector<std::vector<cv::DMatch>> newMatchs;
+        if (descriptors.size() > 1)
+        {
+            //find matches
+            matcher -> knnMatchAsync(descriptors[descriptors.size() - 1], descriptors[descriptors.size() - 2], newMatchsGpu, 1);
+            matcher -> knnMatchConvert(newMatchsGpu, newMatchs, false);
+            matchs.push_back(newMatchs);
+            cv::drawMatches(newFrame, keyPoints[keyPoints.size()-1], oldFrame, keyPoints[keyPoints.size()-2], newMatchs, drawFrame);
+            newFrameGpu.upload(drawFrame);
+            cv::imshow("cudaFeature", newFrameGpu);
+        }
+
+        if (cv::waitKey(10) == 27) break;
+        oldFrame = newFrame;
     }
-
 
     return 0;
 }
