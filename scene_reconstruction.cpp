@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cmath>
 
 #include <opencv2/sfm.hpp>
 #include <opencv2/viz.hpp>
@@ -15,6 +16,8 @@
 #include <opencv2/cudafeatures2d.hpp>
 #include <opencv2/features2d.hpp>
 #include <opencv2/xfeatures2d.hpp>
+
+#include <opencv2/sfm.hpp>
 
 #include "hc.hpp"
 
@@ -34,6 +37,53 @@ int getdir(const std::string _filename, std::vector<std::string> &files)
     return 1;
 }
 */
+
+double calKeyPointDist(const cv::KeyPoint & pt1, const cv::KeyPoint & pt2)
+{
+    return sqrt(pow((pt1.pt.x - pt2.pt.x),2) + pow((pt1.pt.y - pt2.pt.y),2));
+}
+
+bool matchForCamPose(std::vector<cv::Mat> & outPoints, const std::vector<std::vector<cv::DMatch>> & inMatch, const std::vector<std::vector<cv::KeyPoint>> & inKeyPoints, const double & distanceThreshold)
+//create array of corresponding points for camera pose estimation
+{
+    cv::Mat pointSet1, pointSet2;
+    //check distance
+    for (int inMatchCt(0); inMatchCt < inMatch.size(); inMatchCt++)
+    {
+        int keyPointNum = inMatch[inMatchCt][0].queryIdx;
+        if ( calKeyPointDist(inKeyPoints[inKeyPoints.size() - 2][inMatchCt], inKeyPoints[inKeyPoints.size() - 1][keyPointNum]) <= distanceThreshold)
+        {
+            /*
+            cv::vec_<double> point(1,2);
+            point(0,0) = inKeyPoints[inKeyPoints.size() - 2][inMatchCt].pt.x;
+            point(0,1) = inKeyPoints[inKeyPoints.size() - 2][inMatchCt].pt.y;
+            pointSet1.puch_back(point);
+            point(0,0) = inKeyPoints[inKeyPoints.size() - 1][keyPointNum].pt.x;
+            point(0,1) = inKeyPoints[inKeyPoints.size() - 1][keyPointNum].pt.y;
+            pointSet2.puch_back(point);
+            */
+            pointSet1.push_back(cv::Mat(cv::Vec<double, 2>(inKeyPoints[inKeyPoints.size() - 2][inMatchCt].pt.x, inKeyPoints[inKeyPoints.size() - 2][inMatchCt].pt.y)).t());
+            pointSet2.push_back(cv::Mat(cv::Vec<double, 2>(inKeyPoints[inKeyPoints.size() - 1][keyPointNum].pt.x, inKeyPoints[inKeyPoints.size() - 1][keyPointNum].pt.y)).t()); //store matched points from current frame
+        }
+    }
+    if (pointSet1.size().height > 7 )
+    {
+        std::cout << pointSet1.size().width << ' ' << pointSet1.size().height << std::endl;
+        outPoints.push_back(pointSet1.t());
+        outPoints.push_back(pointSet2.t());
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool matchForCamPose(std::vector<cv::Mat> & outPoints, const std::vector<std::vector<cv::DMatch>> & inMatch, const std::vector<std::vector<cv::KeyPoint>> & inKeyPoints)
+//create keypoints for camera pose estimation
+{
+    return matchForCamPose(outPoints, inMatch, inKeyPoints, 20);
+}
 
 int main(int argc, char* argv[])
 {
@@ -65,6 +115,11 @@ int main(int argc, char* argv[])
 
     cv::Mat oldFrame, drawFrame;
 
+    double distThreshold = sqrt(pow(640, 2) + pow(480, 2));
+
+    //matched keypoints for camera pose estimation
+    std::vector<cv::Mat> keyMatch;
+
     while(workEnv.video.grab())
     {
         workEnv.video.retrieve(newFrame);
@@ -76,7 +131,7 @@ int main(int argc, char* argv[])
         cv::cuda::GpuMat frameDescriptors;
         CudaDetector -> detectAndCompute(newFrameGpuGray, cv::cuda::GpuMat(), frameKeypoints, frameDescriptors);
 
-        //
+        //store descriptors and keypoints
         descriptors.push_back(frameDescriptors);
         keyPoints.push_back(frameKeypoints);
 
@@ -88,8 +143,25 @@ int main(int argc, char* argv[])
             //find matches
             matcher -> knnMatchAsync(descriptors[descriptors.size() - 1], descriptors[descriptors.size() - 2], newMatchsGpu, 1);
             matcher -> knnMatchConvert(newMatchsGpu, newMatchs, false);
+
             matchs.push_back(newMatchs);
-            cv::drawMatches(newFrame, keyPoints[keyPoints.size()-1], oldFrame, keyPoints[keyPoints.size()-2], newMatchs, drawFrame);
+
+            if (matchForCamPose(keyMatch, newMatchs, keyPoints))
+            {
+                double scale(1);
+                cv::Mat F;
+                std::cout << "one sfm begin" << std::endl;
+                cv::sfm::normalizedEightPointSolver(keyMatch[keyMatch.size() - 1], keyMatch[keyMatch.size() - 2], F);
+                std::cout << F.at<double>(0,0) << F.at<double>(0,1) << F.at<double>(0,2) << std::endl;
+                std::cout << F.at<double>(1,0) << F.at<double>(1,1) << F.at<double>(1,2) << std::endl;
+                std::cout << F.at<double>(2,0) << F.at<double>(2,1) << F.at<double>(2,2) << std::endl;
+                std::cout << "one sfm finished" << std::endl;
+            }
+            else
+            {
+                std::cout << "failed to find enough points" << std::endl;
+            }
+            cv::drawMatches(newFrame, keyPoints[keyPoints.size() - 1], oldFrame, keyPoints[keyPoints.size() - 2], newMatchs, drawFrame);
             newFrameGpu.upload(drawFrame);
             cv::imshow("cudaFeature", newFrameGpu);
         }
