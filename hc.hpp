@@ -11,7 +11,7 @@ class environment
 {
 public:
 	cv::VideoCapture video;
-	cv::Mat cameraMatrix;
+	cv::Mat cameraMatrix;//K
 	cv::Mat cameraDistCoeffs;
 	environment(std::string inFile);
 };

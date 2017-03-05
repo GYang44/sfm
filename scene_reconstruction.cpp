@@ -40,6 +40,7 @@ int getdir(const std::string _filename, std::vector<std::string> &files)
 template<typename Tp>
 Tp printMat(const cv::Mat & mat)
 {
+    std::cout << std::endl;
     for (int row(0); row < mat.size().height; row++)
     {
         for (int col(0); col < mat.size().width; col++)
@@ -73,7 +74,6 @@ bool matchForCamPose(std::vector<cv::Mat> & outPoints, const std::vector<std::ve
     }
     if (pointSet1.size().height > 7 )
     {
-        std::cout << pointSet1.size().width << ' ' << pointSet1.size().height << std::endl;
         outPoints.push_back(pointSet1.t());
         outPoints.push_back(pointSet2.t());
         return true;
@@ -153,10 +153,26 @@ int main(int argc, char* argv[])
 
             if (matchForCamPose(keyMatch, newMatchs, keyPoints))
             {
-                double scale(1);
                 cv::Mat F;
                 cv::sfm::normalizedEightPointSolver(keyMatch[keyMatch.size() - 1], keyMatch[keyMatch.size() - 2], F);
-                printMat<double>(F);
+                cv::Mat E;
+                cv::sfm::essentialFromFundamental(F, workEnv.cameraMatrix, workEnv.cameraMatrix, E);
+                std::vector<cv::Mat> Rs,ts;//candidates for correct Rotation and translation matrices
+                cv::sfm::motionFromEssential(E, Rs, ts);
+                cv::Mat R,t;
+                int solutionNum = cv::sfm::motionFromEssentialChooseSolution(Rs, ts, workEnv.cameraMatrix, keyMatch[keyMatch.size() - 1](cv::Range(0,2),cv::Range(0,1)), workEnv.cameraMatrix, keyMatch[keyMatch.size() - 2](cv::Range(0,2),cv::Range(0,1)));
+
+                if(solutionNum)
+                {
+                    R = Rs[solutionNum];
+                    t = ts[solutionNum];
+                }
+                else
+                {
+                    std::cout << "no soluion found" << std::endl;
+                }
+                printMat<double>(R);
+                printMat<double>(t);
             }
             else
             {
