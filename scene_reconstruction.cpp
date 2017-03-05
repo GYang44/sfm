@@ -37,6 +37,20 @@ int getdir(const std::string _filename, std::vector<std::string> &files)
     return 1;
 }
 */
+template<typename Tp>
+Tp printMat(const cv::Mat & mat)
+{
+    for (int row(0); row < mat.size().height; row++)
+    {
+        for (int col(0); col < mat.size().width; col++)
+        {
+            std::cout << mat.at<Tp>(row,col) << ' ';
+        }
+        std::cout << std::endl;
+    }
+    //;
+    return 0;
+}
 
 double calKeyPointDist(const cv::KeyPoint & pt1, const cv::KeyPoint & pt2)
 {
@@ -53,15 +67,6 @@ bool matchForCamPose(std::vector<cv::Mat> & outPoints, const std::vector<std::ve
         int keyPointNum = inMatch[inMatchCt][0].queryIdx;
         if ( calKeyPointDist(inKeyPoints[inKeyPoints.size() - 2][inMatchCt], inKeyPoints[inKeyPoints.size() - 1][keyPointNum]) <= distanceThreshold)
         {
-            /*
-            cv::vec_<double> point(1,2);
-            point(0,0) = inKeyPoints[inKeyPoints.size() - 2][inMatchCt].pt.x;
-            point(0,1) = inKeyPoints[inKeyPoints.size() - 2][inMatchCt].pt.y;
-            pointSet1.puch_back(point);
-            point(0,0) = inKeyPoints[inKeyPoints.size() - 1][keyPointNum].pt.x;
-            point(0,1) = inKeyPoints[inKeyPoints.size() - 1][keyPointNum].pt.y;
-            pointSet2.puch_back(point);
-            */
             pointSet1.push_back(cv::Mat(cv::Vec<double, 2>(inKeyPoints[inKeyPoints.size() - 2][inMatchCt].pt.x, inKeyPoints[inKeyPoints.size() - 2][inMatchCt].pt.y)).t());
             pointSet2.push_back(cv::Mat(cv::Vec<double, 2>(inKeyPoints[inKeyPoints.size() - 1][keyPointNum].pt.x, inKeyPoints[inKeyPoints.size() - 1][keyPointNum].pt.y)).t()); //store matched points from current frame
         }
@@ -150,12 +155,8 @@ int main(int argc, char* argv[])
             {
                 double scale(1);
                 cv::Mat F;
-                std::cout << "one sfm begin" << std::endl;
                 cv::sfm::normalizedEightPointSolver(keyMatch[keyMatch.size() - 1], keyMatch[keyMatch.size() - 2], F);
-                std::cout << F.at<double>(0,0) << F.at<double>(0,1) << F.at<double>(0,2) << std::endl;
-                std::cout << F.at<double>(1,0) << F.at<double>(1,1) << F.at<double>(1,2) << std::endl;
-                std::cout << F.at<double>(2,0) << F.at<double>(2,1) << F.at<double>(2,2) << std::endl;
-                std::cout << "one sfm finished" << std::endl;
+                printMat<double>(F);
             }
             else
             {
