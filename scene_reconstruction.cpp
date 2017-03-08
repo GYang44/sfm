@@ -162,8 +162,10 @@ int main(int argc, char* argv[])
                 cv::Mat R,t;
                 int solutionNum = cv::sfm::motionFromEssentialChooseSolution(Rs, ts, workEnv.cameraMatrix, keyMatch[keyMatch.size() - 1](cv::Range(0,2),cv::Range(0,1)), workEnv.cameraMatrix, keyMatch[keyMatch.size() - 2](cv::Range(0,2),cv::Range(0,1)));
 
-                if(solutionNum)
+                if(solutionNum >= 0)
                 {
+                    std::cout << solutionNum << R.size() << " " << t.size() << std::endl;
+
                     R = Rs[solutionNum];
                     t = ts[solutionNum];
                 }
@@ -171,13 +173,14 @@ int main(int argc, char* argv[])
                 {
                     std::cout << "no soluion found" << std::endl;
                 }
-                printMat<double>(R);
-                printMat<double>(t);
             }
             else
             {
-                std::cout << "failed to find enough points" << std::endl;
+
+                descriptors.erase(descriptors.end());
+                std::cout << "failed to find enough points, last frame erased" << std::endl;
             }
+
             cv::drawMatches(newFrame, keyPoints[keyPoints.size() - 1], oldFrame, keyPoints[keyPoints.size() - 2], newMatchs, drawFrame);
             newFrameGpu.upload(drawFrame);
             cv::imshow("cudaFeature", newFrameGpu);
