@@ -50,7 +50,7 @@ public:
 	}
 
 	//Calculate new position and orientation relative to world coordinate system
-	void updateWrP(const object3D & refObject)
+	void updateWrP(const object3D refObject)
 	{
 		wr = refObject.wr * r;
 		// p = wr * (r * [0 0 0]' + t) + refObject.p
@@ -58,6 +58,11 @@ public:
 
 		return;
 	}
-
+	void iniWr()
+	{
+		for (uint i(0); i < 3; i++)
+			wr(i,i) = 1;
+		return;
+	}
 };
 #endif

@@ -1,7 +1,7 @@
 #include "glVisualizer.hpp"
 
-float xRot, yRot, zRot;
-object3D camera;
+//float xRot, yRot, zRot;
+//object3D camera;
 
 void drawString(const std::string & inString)
 {
@@ -61,6 +61,7 @@ void DrawWorldCoornidates()
 		glRasterPos3f(0,0,200);
 		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, 'Z');
 	}
+
 }
 
 void RenderScene()

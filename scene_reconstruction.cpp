@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <cmath>
+#include <thread>
 
 #include <opencv2/sfm.hpp>
 #include <opencv2/viz.hpp>
@@ -24,6 +25,13 @@
 #include "object3D.hpp"
 
 //camera view point (angle)
+object3D camera;
+
+//global variable for view angle
+float xRot = -70.0f;
+float yRot = 0.0f;
+float zRot = 30.0f;
+
 
 template<typename Tp>
 Tp printMat(const cv::Mat & mat)
@@ -37,7 +45,6 @@ Tp printMat(const cv::Mat & mat)
         }
         std::cout << std::endl;
     }
-    //;
     return 0;
 }
 
@@ -78,8 +85,12 @@ bool matchForCamPose(std::vector<cv::Mat> & outPoints, const std::vector<std::ve
     return matchForCamPose(outPoints, inMatch, inKeyPoints, 20);
 }
 
-void camPoseFromVideo(environment & workEnv)
+//void camPoseFromVideo(environment & workEnv)
+void camPoseFromVideo()
 {
+    // Read input parameters
+    //sfmEnviroment wkEnv(std::string("../setting.xml"));
+    environment workEnv("../setting.xml");
     //create new window set device
     cv::namedWindow("cudaFeature", cv::WINDOW_OPENGL);
     cv::cuda::setDevice(0);
@@ -143,15 +154,12 @@ void camPoseFromVideo(environment & workEnv)
                 cv::sfm::essentialFromFundamental(F, workEnv.cameraMatrix, workEnv.cameraMatrix, E);
                 std::vector<cv::Mat> Rs,ts;//candidates for correct Rotation and translation matrices
                 cv::sfm::motionFromEssential(E, Rs, ts);
-                cv::Mat R,t;
                 int solutionNum = cv::sfm::motionFromEssentialChooseSolution(Rs, ts, workEnv.cameraMatrix, keyMatch[keyMatch.size() - 1](cv::Range(0,2),cv::Range(0,1)), workEnv.cameraMatrix, keyMatch[keyMatch.size() - 2](cv::Range(0,2),cv::Range(0,1)));
 
                 if(solutionNum >= 0)
                 {
-                    R = Rs[solutionNum];
-                    t = ts[solutionNum];
-                    std::cout << solutionNum << R.size() << " " << t.size() << std::endl;
-
+                    camera.updateRT(Rs[solutionNum],ts[solutionNum]);
+                    camera.updateWrP(camera);
                 }
                 else
                 {
@@ -178,19 +186,22 @@ void camPoseFromVideo(environment & workEnv)
 
 int main(int argc, char* argv[])
 {
-    //global variable for view angle
-    float xRot = -70.0f;
-    float yRot = 0.0f;
-    float zRot = 30.0f;
+    //object3D camera;
+    camera.iniWr();
+    camera.isInitialed = true;
 
-    object3D camera;
+    std::thread camEst (camPoseFromVideo);
 
-    // Read input parameters
-    //sfmEnviroment wkEnv(std::string("../setting.xml"));
-    environment workEnv("../setting.xml");
-
-    camPoseFromVideo(workEnv);
-
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+    glutInitWindowSize (1280, 720);
+    glutInitWindowPosition (0,0);
+    glutCreateWindow( "Live Show" );
+    glutDisplayFunc( RenderScene );
+    glutReshapeFunc( ChangeSize );
+	glutKeyboardFunc( viewControl );
+    SetupRC();
+    glutMainLoop();
 
     return 0;
 }
