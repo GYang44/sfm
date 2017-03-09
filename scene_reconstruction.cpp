@@ -19,24 +19,12 @@
 
 #include <opencv2/sfm.hpp>
 
-#include "hc.hpp"
+#include "environment.hpp"
+#include "glVisualizer.hpp"
+#include "object3D.hpp"
 
-/*
-int getdir(const std::string _filename, std::vector<std::string> &files)
-{
-    std::ifstream myfile(_filename.c_str());
-    if (!myfile.is_open()) {
-        std::cout << "Unable to read file: " << _filename << std::endl;
-        exit(0);
-    } else {;
-        size_t found = _filename.find_last_of("/\\");
-        std::string line_str, path_to_file = _filename.substr(0, found);
-        while ( getline(myfile, line_str) )
-            files.push_back(path_to_file+std::string("/")+line_str);
-    }
-    return 1;
-}
-*/
+//camera view point (angle)
+
 template<typename Tp>
 Tp printMat(const cv::Mat & mat)
 {
@@ -90,12 +78,8 @@ bool matchForCamPose(std::vector<cv::Mat> & outPoints, const std::vector<std::ve
     return matchForCamPose(outPoints, inMatch, inKeyPoints, 20);
 }
 
-int main(int argc, char* argv[])
+void camPoseFromVideo(environment & workEnv)
 {
-    // Read input parameters
-    //sfmEnviroment wkEnv(std::string("../setting.xml"));
-    environment workEnv("../setting.xml");
-
     //create new window set device
     cv::namedWindow("cudaFeature", cv::WINDOW_OPENGL);
     cv::cuda::setDevice(0);
@@ -164,10 +148,10 @@ int main(int argc, char* argv[])
 
                 if(solutionNum >= 0)
                 {
-                    std::cout << solutionNum << R.size() << " " << t.size() << std::endl;
-
                     R = Rs[solutionNum];
                     t = ts[solutionNum];
+                    std::cout << solutionNum << R.size() << " " << t.size() << std::endl;
+
                 }
                 else
                 {
@@ -189,6 +173,24 @@ int main(int argc, char* argv[])
         if (cv::waitKey(10) == 27) break;
         oldFrame = newFrame;
     }
+
+}
+
+int main(int argc, char* argv[])
+{
+    //global variable for view angle
+    float xRot = -70.0f;
+    float yRot = 0.0f;
+    float zRot = 30.0f;
+
+    object3D camera;
+
+    // Read input parameters
+    //sfmEnviroment wkEnv(std::string("../setting.xml"));
+    environment workEnv("../setting.xml");
+
+    camPoseFromVideo(workEnv);
+
 
     return 0;
 }
