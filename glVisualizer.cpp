@@ -1,7 +1,6 @@
 #include "glVisualizer.hpp"
 
-//float xRot, yRot, zRot;
-//object3D camera;
+GLfloat lScale(10.0f);
 
 void drawString(const std::string & inString)
 {
@@ -12,62 +11,175 @@ void drawString(const std::string & inString)
 	return;
 }
 
-void DrawWorldCoornidates()
+void drawWorldCoornidates()
 {
-	//draw axis
+	glColor3f( 0.34f, 0.81f, 1.0f );//blue
+	glBegin( GL_LINES );
 	{
-		glColor3f( 0.34f, 0.81f, 1.0f );//blue
-		glBegin( GL_LINES );
-		{
-			// x-axis
-			glVertex3f( -200.0f, 0.0f, 0.0f);
-			glVertex3f( 200.0f, 0.0f, 0.0f);
-			glVertex3f( 200.0f, 0.0f, 0.0f);
-			glVertex3f( 193.0f, 3.0f, 0.0f);
-			glVertex3f( 200.0f, 0.0f, 0.0f);
-			glVertex3f( 193.0f,-3.0f, 0.0f);
-		}
-		glEnd();
-		glRasterPos3f(200,0,0);
-		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, 'X');
-
-		glColor3f( 0.0f, 1.0f, 0.0f );//green
-		glBegin( GL_LINES );
-		{
-			// y-axis
-			glVertex3f( 0.0f, -200.0f, 0.0f);
-			glVertex3f( 0.0f, 200.0f, 0.0f);
-			glVertex3f( 0.0f, 200.0f, 0.0f);
-			glVertex3f( 3.0f, 193.0f, 0.0f);
-			glVertex3f( 0.0f, 200.0f, 0.0f);
-			glVertex3f( -3.0f, 193.0f, 0.0f);
-		}
-		glEnd();
-		glRasterPos3f(0,200,0);
-		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, 'Y');
-
-		glColor3f( 1.0f, 0.0f, 0.0f );//red
-		glBegin( GL_LINES );
-		{
-			// z-axis (drawn in oppsite direction)
-			glVertex3f( 0.0f, 0.0f, -200.0f );
-			glVertex3f( 0.0f, 0.0f, 200.0f );
-			glVertex3f( 0.0f, 0.0f, 200.0f );
-			glVertex3f( 0.0f, 3.0f, 193.0f );
-			glVertex3f( 0.0f, 0.0f, 200.0f );
-			glVertex3f( 0.0f, -3.0f, 193.0f);
-		}
-		glEnd();
-		glRasterPos3f(0,0,200);
-		glutBitmapCharacter(GLUT_BITMAP_9_BY_15, 'Z');
+		// x-axis
+		glVertex3f( -200.0f, 0.0f, 0.0f);
+		glVertex3f( 200.0f, 0.0f, 0.0f);
+		glVertex3f( 200.0f, 0.0f, 0.0f);
+		glVertex3f( 193.0f, 3.0f, 0.0f);
+		glVertex3f( 200.0f, 0.0f, 0.0f);
+		glVertex3f( 193.0f,-3.0f, 0.0f);
 	}
+	glEnd();
+	glRasterPos3f(200,0,0);
+	glutBitmapCharacter(GLUT_BITMAP_9_BY_15, 'X');
+
+	glColor3f( 0.0f, 1.0f, 0.0f );//green
+	glBegin( GL_LINES );
+	{
+		// y-axis
+		glVertex3f( 0.0f, -200.0f, 0.0f);
+		glVertex3f( 0.0f, 200.0f, 0.0f);
+		glVertex3f( 0.0f, 200.0f, 0.0f);
+		glVertex3f( 3.0f, 193.0f, 0.0f);
+		glVertex3f( 0.0f, 200.0f, 0.0f);
+		glVertex3f( -3.0f, 193.0f, 0.0f);
+	}
+	glEnd();
+	glRasterPos3f(0,200,0);
+	glutBitmapCharacter(GLUT_BITMAP_9_BY_15, 'Y');
+
+	glColor3f( 1.0f, 0.0f, 0.0f );//red
+	glBegin( GL_LINES );
+	{
+		// z-axis (drawn in oppsite direction)
+		glVertex3f( 0.0f, 0.0f, -200.0f );
+		glVertex3f( 0.0f, 0.0f, 200.0f );
+		glVertex3f( 0.0f, 0.0f, 200.0f );
+		glVertex3f( 0.0f, 3.0f, 193.0f );
+		glVertex3f( 0.0f, 0.0f, 200.0f );
+		glVertex3f( 0.0f, -3.0f, 193.0f);
+	}
+	glEnd();
+	glRasterPos3f(0,0,200);
+	glutBitmapCharacter(GLUT_BITMAP_9_BY_15, 'Z');
 
 }
 
-void RenderScene()
+void drawPolyLine(const std::vector<arma::Mat<double>> & inLine)
 {
-	//scale of the length of the aruco
-	double lScale(100.0f);
+	assert(inLine.size() > 1); //require 2 points for a line
+	glColor3f(0.34f, 0.81f, 1.0f);
+	std::vector<arma::Mat<double>>::const_iterator it = inLine.begin();
+	glBegin( GL_LINE_STRIP);
+	{
+		while(it != inLine.end())
+		{
+			glVertex3f((*it)(0), (*it)(1), (*it)(2));
+			it++;
+		}
+	}
+	glEnd();
+	return;
+}
+
+void draw3D_Object(const object3D & object)
+{
+	glColor3f( 0.34f, 0.81f, 1.0f );//blue
+	glBegin( GL_LINES );
+	{
+		// x-axis
+		glVertex3f( object.p(0,0),
+					object.p(1,0),
+					object.p(2,0));
+		glVertex3f( object.p(0,0) + lScale * object.wr(0,0),
+					object.p(1,0) + lScale * object.wr(1,0),
+					object.p(2,0) + lScale * object.wr(2,0));
+	}
+	glEnd();
+
+	glColor3f( 0.0f, 1.0f, 0.0f );//green
+	glBegin( GL_LINES );
+	{
+	// y-axis
+		glVertex3f( object.p(0,0),
+					object.p(1,0),
+					object.p(2,0));
+		glVertex3f( object.p(0,0) + lScale * object.wr(0,1),
+					object.p(1,0) + lScale * object.wr(1,1),
+					object.p(2,0) + lScale * object.wr(2,1));
+
+	}
+	glEnd();
+
+	glColor3f( 1.0f, 0.0f, 0.0f );//red
+	glBegin( GL_LINES );
+	{
+		// z-axis
+		glVertex3f( object.p(0,0),
+					object.p(1,0),
+					object.p(2,0));
+		glVertex3f( object.p(0,0) + lScale * object.wr(0,2),
+					object.p(1,0) + lScale * object.wr(1,2),
+					object.p(2,0) + lScale * object.wr(2,2));
+	}
+	glEnd();
+
+	//draw feild of view of object
+	glColor3f( 1.0f, 1.0f, 0.0f );//yellow
+	glBegin( GL_LINES );
+	{
+		glVertex3f( object.p(0,0),
+					object.p(1,0),
+					object.p(2,0));
+		glVertex3f( object.p(0,0) + 2 * lScale * object.wr(0,0) + lScale * object.wr(0,1) + lScale * object.wr(0,2),
+					object.p(1,0) + 2 * lScale * object.wr(1,0) + lScale * object.wr(1,1) + lScale * object.wr(1,2),
+					object.p(2,0) + 2 * lScale * object.wr(2,0) + lScale * object.wr(2,1) + lScale * object.wr(2,2));
+		glVertex3f( object.p(0,0),
+					object.p(1,0),
+					object.p(2,0));
+		glVertex3f( object.p(0,0) - 2 * lScale * object.wr(0,0) + lScale * object.wr(0,1) + lScale * object.wr(0,2),
+					object.p(1,0) - 2 * lScale * object.wr(1,0) + lScale * object.wr(1,1) + lScale * object.wr(1,2),
+					object.p(2,0) - 2 * lScale * object.wr(2,0) + lScale * object.wr(2,1) + lScale * object.wr(2,2));
+		glVertex3f( object.p(0,0),
+					object.p(1,0),
+					object.p(2,0));
+		glVertex3f( object.p(0,0) - 2 * lScale * object.wr(0,0) - lScale * object.wr(0,1) + lScale * object.wr(0,2),
+					object.p(1,0) - 2 * lScale * object.wr(1,0) - lScale * object.wr(1,1) + lScale * object.wr(1,2),
+					object.p(2,0) - 2 * lScale * object.wr(2,0) - lScale * object.wr(2,1) + lScale * object.wr(2,2));
+		glVertex3f( object.p(0,0),
+					object.p(1,0),
+					object.p(2,0));
+		glVertex3f( object.p(0,0) + 2 * lScale * object.wr(0,0) - lScale * object.wr(0,1) + lScale * object.wr(0,2),
+					object.p(1,0) + 2 * lScale * object.wr(1,0) - lScale * object.wr(1,1) + lScale * object.wr(1,2),
+					object.p(2,0) + 2 * lScale * object.wr(2,0) - lScale * object.wr(2,1) + lScale * object.wr(2,2));
+	}
+	glEnd();
+	glBegin( GL_LINE_STRIP );
+	{
+		glVertex3f( object.p(0,0) + 2 * lScale * object.wr(0,0) + lScale * object.wr(0,1) + lScale * object.wr(0,2),
+					object.p(1,0) + 2 * lScale * object.wr(1,0) + lScale * object.wr(1,1) + lScale * object.wr(1,2),
+					object.p(2,0) + 2 * lScale * object.wr(2,0) + lScale * object.wr(2,1) + lScale * object.wr(2,2));
+		glVertex3f( object.p(0,0) - 2 * lScale * object.wr(0,0) + lScale * object.wr(0,1) + lScale * object.wr(0,2),
+					object.p(1,0) - 2 * lScale * object.wr(1,0) + lScale * object.wr(1,1) + lScale * object.wr(1,2),
+					object.p(2,0) - 2 * lScale * object.wr(2,0) + lScale * object.wr(2,1) + lScale * object.wr(2,2));
+		glVertex3f( object.p(0,0) - 2 * lScale * object.wr(0,0) - lScale * object.wr(0,1) + lScale * object.wr(0,2),
+					object.p(1,0) - 2 * lScale * object.wr(1,0) - lScale * object.wr(1,1) + lScale * object.wr(1,2),
+					object.p(2,0) - 2 * lScale * object.wr(2,0) - lScale * object.wr(2,1) + lScale * object.wr(2,2));
+		glVertex3f( object.p(0,0) + 2 * lScale * object.wr(0,0) - lScale * object.wr(0,1) + lScale * object.wr(0,2),
+					object.p(1,0) + 2 * lScale * object.wr(1,0) - lScale * object.wr(1,1) + lScale * object.wr(1,2),
+					object.p(2,0) + 2 * lScale * object.wr(2,0) - lScale * object.wr(2,1) + lScale * object.wr(2,2));
+		glVertex3f( object.p(0,0) + 2 * lScale * object.wr(0,0) + lScale * object.wr(0,1) + lScale * object.wr(0,2),
+					object.p(1,0) + 2 * lScale * object.wr(1,0) + lScale * object.wr(1,1) + lScale * object.wr(1,2),
+					object.p(2,0) + 2 * lScale * object.wr(2,0) + lScale * object.wr(2,1) + lScale * object.wr(2,2));
+	}
+	glEnd();
+
+	std::ostringstream tmp;
+	tmp << object.p(0,0) << ' ' << object.p(1,0) << ' ' << object.p(2,0);
+	std::string position = tmp.str();
+	glRasterPos3f( object.p(0,0) + lScale * object.wr(0,0),
+				object.p(1,0) + lScale * object.wr(1,0),
+				object.p(2,0) + lScale * object.wr(2,0));
+	drawString(position);
+}
+
+void renderScene()
+{
 
 	// reset matrix state
 	glLoadIdentity();
@@ -76,112 +188,19 @@ void RenderScene()
 	glRotatef(xRot, 1.0f, 0.0f, 0.0f);
 	glRotatef(yRot, 0.0f, 1.0f, 0.0f);
 	glRotatef(zRot, 0.0f, 0.0f, 1.0f);
+	//initial color
+	glClear( GL_COLOR_BUFFER_BIT );
+
 
 	//visual render opengl and opencv
-	glClear( GL_COLOR_BUFFER_BIT );
-	DrawWorldCoornidates();
-
+	drawWorldCoornidates();
 
 	//Draw camera in world coordinate
 	if (camera.isInitialed)
 	{
-		glColor3f( 0.34f, 0.81f, 1.0f );//blue
-		glBegin( GL_LINES );
-		{
-			// x-axis
-			glVertex3f( camera.p(0,0),
-						camera.p(1,0),
-						camera.p(2,0));
-			glVertex3f( camera.p(0,0) + lScale * camera.wr(0,0),
-						camera.p(1,0) + lScale * camera.wr(1,0),
-						camera.p(2,0) + lScale * camera.wr(2,0));
-		}
-		glEnd();
-
-		glColor3f( 0.0f, 1.0f, 0.0f );//green
-		glBegin( GL_LINES );
-		{
-		// y-axis
-			glVertex3f( camera.p(0,0),
-						camera.p(1,0),
-						camera.p(2,0));
-			glVertex3f( camera.p(0,0) + lScale * camera.wr(0,1),
-						camera.p(1,0) + lScale * camera.wr(1,1),
-						camera.p(2,0) + lScale * camera.wr(2,1));
-
-		}
-		glEnd();
-
-		glColor3f( 1.0f, 0.0f, 0.0f );//red
-		glBegin( GL_LINES );
-		{
-			// z-axis
-			glVertex3f( camera.p(0,0),
-						camera.p(1,0),
-						camera.p(2,0));
-			glVertex3f( camera.p(0,0) + lScale * camera.wr(0,2),
-						camera.p(1,0) + lScale * camera.wr(1,2),
-						camera.p(2,0) + lScale * camera.wr(2,2));
-		}
-		glEnd();
-
-		//draw feild of view of camera
-		glColor3f( 1.0f, 1.0f, 0.0f );//yellow
-		glBegin( GL_LINES );
-		{
-			glVertex3f( camera.p(0,0),
-						camera.p(1,0),
-						camera.p(2,0));
-			glVertex3f( camera.p(0,0) + 2 * lScale * camera.wr(0,0) + lScale * camera.wr(0,1) + lScale * camera.wr(0,2),
-						camera.p(1,0) + 2 * lScale * camera.wr(1,0) + lScale * camera.wr(1,1) + lScale * camera.wr(1,2),
-						camera.p(2,0) + 2 * lScale * camera.wr(2,0) + lScale * camera.wr(2,1) + lScale * camera.wr(2,2));
-			glVertex3f( camera.p(0,0),
-						camera.p(1,0),
-						camera.p(2,0));
-			glVertex3f( camera.p(0,0) - 2 * lScale * camera.wr(0,0) + lScale * camera.wr(0,1) + lScale * camera.wr(0,2),
-						camera.p(1,0) - 2 * lScale * camera.wr(1,0) + lScale * camera.wr(1,1) + lScale * camera.wr(1,2),
-						camera.p(2,0) - 2 * lScale * camera.wr(2,0) + lScale * camera.wr(2,1) + lScale * camera.wr(2,2));
-			glVertex3f( camera.p(0,0),
-						camera.p(1,0),
-						camera.p(2,0));
-			glVertex3f( camera.p(0,0) - 2 * lScale * camera.wr(0,0) - lScale * camera.wr(0,1) + lScale * camera.wr(0,2),
-						camera.p(1,0) - 2 * lScale * camera.wr(1,0) - lScale * camera.wr(1,1) + lScale * camera.wr(1,2),
-						camera.p(2,0) - 2 * lScale * camera.wr(2,0) - lScale * camera.wr(2,1) + lScale * camera.wr(2,2));
-			glVertex3f( camera.p(0,0),
-						camera.p(1,0),
-						camera.p(2,0));
-			glVertex3f( camera.p(0,0) + 2 * lScale * camera.wr(0,0) - lScale * camera.wr(0,1) + lScale * camera.wr(0,2),
-						camera.p(1,0) + 2 * lScale * camera.wr(1,0) - lScale * camera.wr(1,1) + lScale * camera.wr(1,2),
-						camera.p(2,0) + 2 * lScale * camera.wr(2,0) - lScale * camera.wr(2,1) + lScale * camera.wr(2,2));
-		}
-		glEnd();
-		glBegin( GL_LINE_STRIP );
-		{
-			glVertex3f( camera.p(0,0) + 2 * lScale * camera.wr(0,0) + lScale * camera.wr(0,1) + lScale * camera.wr(0,2),
-						camera.p(1,0) + 2 * lScale * camera.wr(1,0) + lScale * camera.wr(1,1) + lScale * camera.wr(1,2),
-						camera.p(2,0) + 2 * lScale * camera.wr(2,0) + lScale * camera.wr(2,1) + lScale * camera.wr(2,2));
-			glVertex3f( camera.p(0,0) - 2 * lScale * camera.wr(0,0) + lScale * camera.wr(0,1) + lScale * camera.wr(0,2),
-						camera.p(1,0) - 2 * lScale * camera.wr(1,0) + lScale * camera.wr(1,1) + lScale * camera.wr(1,2),
-						camera.p(2,0) - 2 * lScale * camera.wr(2,0) + lScale * camera.wr(2,1) + lScale * camera.wr(2,2));
-			glVertex3f( camera.p(0,0) - 2 * lScale * camera.wr(0,0) - lScale * camera.wr(0,1) + lScale * camera.wr(0,2),
-						camera.p(1,0) - 2 * lScale * camera.wr(1,0) - lScale * camera.wr(1,1) + lScale * camera.wr(1,2),
-						camera.p(2,0) - 2 * lScale * camera.wr(2,0) - lScale * camera.wr(2,1) + lScale * camera.wr(2,2));
-			glVertex3f( camera.p(0,0) + 2 * lScale * camera.wr(0,0) - lScale * camera.wr(0,1) + lScale * camera.wr(0,2),
-						camera.p(1,0) + 2 * lScale * camera.wr(1,0) - lScale * camera.wr(1,1) + lScale * camera.wr(1,2),
-						camera.p(2,0) + 2 * lScale * camera.wr(2,0) - lScale * camera.wr(2,1) + lScale * camera.wr(2,2));
-			glVertex3f( camera.p(0,0) + 2 * lScale * camera.wr(0,0) + lScale * camera.wr(0,1) + lScale * camera.wr(0,2),
-						camera.p(1,0) + 2 * lScale * camera.wr(1,0) + lScale * camera.wr(1,1) + lScale * camera.wr(1,2),
-						camera.p(2,0) + 2 * lScale * camera.wr(2,0) + lScale * camera.wr(2,1) + lScale * camera.wr(2,2));
-		}
-		glEnd();
-
-		std::ostringstream tmp;
-		tmp << camera.p(0,0) << ' ' << camera.p(1,0) << ' ' << camera.p(2,0);
-		std::string position = tmp.str();
-		glRasterPos3f( camera.p(0,0) + lScale * camera.wr(0,0),
-					camera.p(1,0) + lScale * camera.wr(1,0),
-					camera.p(2,0) + lScale * camera.wr(2,0));
-		drawString(position);
+		draw3D_Object(camera);
+		if(camera.trajactory.size() > 1)
+			drawPolyLine(camera.trajactory);
 	}
 
 	// Restore transformations
@@ -191,15 +210,15 @@ void RenderScene()
 	return;
 }
 
-void SetupRC()
+void setupRC()
 {
 	glClearColor( 0.0, 0.0, 0.0, 1.0 );
 	glColor3f( 1.0f, 0.0f, 0.0f );
 }
 
-void ChangeSize( GLsizei w, GLsizei h )
+void changeSize( GLsizei w, GLsizei h )
 {
-	GLfloat nRange = 2000.0f;
+	GLfloat nRange = lScale * 20.0f;
     // Prevent a divide by zero
     if(h == 0)
         h = 1;

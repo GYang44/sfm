@@ -2,38 +2,43 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <assert.h>
+#include <armadillo>
 
 #include "object3D.hpp"
 
 #ifndef GL_VIS_h
 #define GL_VIS_h
 
-
+    //Global object defining camera gesture 3D object
     extern object3D camera;
 
+    //Global variables defining roation of the scene
     extern float xRot;
     extern float yRot;
     extern float zRot;
-
+    extern GLfloat lScale;
 
     //Draw strings in GL window
     void drawString(const std::string & inString);
 
     //Draw reference coordinate in the GL window
-    void DrawWorldCoornidates();
+    void drawWorldCoornidates();
 
     //The function that move objects in the window
     //Currently can only draw the camera
-    void RenderScene();
+    void renderScene();
 
     //Change view point
-    void SetupRC();
+    void setupRC();
 
     //Change size of GL window
-    void ChangeSize( GLsizei w, GLsizei h);
+    void changeSize( GLsizei w, GLsizei h);
 
     //Keyboard interface
     void viewControl(unsigned char key, int x, int y);
 
+    void draw3D_Object(const object3D & object);
 
+    void drawPolyLine(const std::vector<arma::Mat<double>> & inLine);
 #endif

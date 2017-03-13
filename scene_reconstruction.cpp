@@ -178,7 +178,7 @@ void camPoseFromVideo()
             cv::imshow("cudaFeature", newFrameGpu);
         }
 
-        if (cv::waitKey(10) == 27) break;
+        if (cv::waitKey(30) == 27) break;
         oldFrame = newFrame;
     }
 
@@ -197,10 +197,10 @@ int main(int argc, char* argv[])
     glutInitWindowSize (1280, 720);
     glutInitWindowPosition (0,0);
     glutCreateWindow( "Live Show" );
-    glutDisplayFunc( RenderScene );
-    glutReshapeFunc( ChangeSize );
+    glutDisplayFunc( renderScene );
+    glutReshapeFunc( changeSize );
 	glutKeyboardFunc( viewControl );
-    SetupRC();
+    setupRC();
     glutMainLoop();
 
     return 0;

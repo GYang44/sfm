@@ -9,11 +9,12 @@ class object3D
 {
 public:
 	bool isInitialed = false;
+	int counter = 0;
 	arma::Mat<double> r = arma::Mat<double>(3,3,arma::fill::zeros);
 	arma::Mat<double> t = arma::Mat<double>(3,1,arma::fill::zeros);
 	arma::Mat<double> wr = arma::Mat<double>(3,3,arma::fill::zeros);//rotation matrix to world
 	arma::Mat<double> p = arma::Mat<double>(3,1,arma::fill::zeros);//position relative to world
-	uint id;
+	std::vector<arma::Mat<double>> trajactory;
 	//with known
 	void calWrP(const object3D & refObject)
 	{
@@ -53,16 +54,21 @@ public:
 	void updateWrP(const object3D refObject)
 	{
 		wr = refObject.wr * r;
-		// p = wr * (r * [0 0 0]' + t) + refObject.p
 		p = refObject.wr * t + refObject.p;
-
+		record();
 		return;
 	}
 	void iniWr()
 	{
-		for (uint i(0); i < 3; i++)
-			wr(i,i) = 1;
-		return;
+		wr(0,2) = 1;
+		wr(1,0) = 1;
+		wr(2,1) = 1;
+		record();
+	}
+	void record()
+	{
+		trajactory.push_back(p);
 	}
 };
+
 #endif
