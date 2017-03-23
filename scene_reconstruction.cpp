@@ -23,6 +23,7 @@
 #include "environment.hpp"
 #include "glVisualizer.hpp"
 #include "object3D.hpp"
+#include "frame.hpp"
 
 //camera view point (angle)
 object3D camera;
@@ -51,6 +52,24 @@ Tp printMat(const cv::Mat & mat)
 double calKeyPointDist(const cv::KeyPoint & pt1, const cv::KeyPoint & pt2)
 {
     return sqrt(pow((pt1.pt.x - pt2.pt.x),2) + pow((pt1.pt.y - pt2.pt.y),2));
+}
+
+
+void vecKeypointToMatKeypoint(cv::Mat & matKeypoints, const std::vector<cv::KeyPoint> & vecKeypoints)
+{
+    for (std::vector<cv::KeyPoint>::const_iterator keypointIt = vecKeypoints.begin(); keypointIt != vecKeypoints.end(); keypointIt++)
+    {
+        matKeypoints.push_back(cv::Mat(cv::Vec<double, 2>( keypointIt -> pt.x, keypointIt -> pt.y)).t());
+    }
+    matKeypoints = matKeypoints.t();
+    return;
+}
+
+cv::Mat vecKeypointToMatKeypoint(const std::vector<cv::KeyPoint> & vecKeypoints)
+{
+    cv::Mat matKeypoints;
+    vecKeypointToMatKeypoint(matKeypoints, vecKeypoints);
+    return matKeypoints;
 }
 
 bool matchForCamPose(std::vector<cv::Mat> & outPoints, const std::vector<std::vector<cv::DMatch>> & inMatch, const std::vector<std::vector<cv::KeyPoint>> & inKeyPoints, const double & distanceThreshold)
@@ -96,18 +115,15 @@ void camPoseFromVideo()
     cv::cuda::setDevice(0);
 
     //create feature detector
-    cv::Ptr<cv::cuda::ORB> CudaDetector = cv::cuda::ORB::create(500, 1.2f, 8, 31, 0, 2, 0, 31, 20, true);
+    cv::Ptr<cv::cuda::ORB> CudaDetector = cv::cuda::ORB::create(2000, 1.2f, 8, 31, 0, 2, 0, 31, 20, true);
 
     //tmp variable for frame handling
-    cv::cuda::GpuMat newFrameGpu, newFrameGpuGray;
-    cv::Mat newFrame;
+    cv::cuda::GpuMat newImgFrameGpu, newImgFrameGpuGray;
+    cv::Mat newImgFrame;
 
-    //feature descriptors for each frame
-    cv::cuda::GpuMat newFrameFeature;
-    //keypoints for entire video
-    std::vector<std::vector<cv::KeyPoint>> keyPoints;
-    //feature descriptors for entire video
-    std::vector<cv::cuda::GpuMat> descriptors;
+    //frames of keypoints and descriptors for entire video
+    std::vector<frame> frames;
+
     //all matches
     std::vector<std::vector<std::vector<cv::DMatch>>> matchs;
 
@@ -115,36 +131,41 @@ void camPoseFromVideo()
 
     cv::Mat oldFrame, drawFrame;
 
-    double distThreshold = sqrt(pow(640, 2) + pow(480, 2));
+    const double distThreshold = sqrt(pow(640, 2) + pow(480, 2));
 
     //matched keypoints for camera pose estimation
     std::vector<cv::Mat> keyMatch;
 
     while(workEnv.video.grab())
     {
-        workEnv.video.retrieve(newFrame);
-        newFrameGpu.upload(newFrame);
-        cv::cuda::cvtColor(newFrameGpu, newFrameGpuGray, CV_RGB2GRAY);
+        //convert new frame to gray scale on GPU
+        workEnv.video.retrieve(newImgFrame);
+        newImgFrameGpu.upload(newImgFrame);
+        cv::cuda::cvtColor(newImgFrameGpu, newImgFrameGpuGray, CV_RGB2GRAY);
 
         //detect keypoints and compute descriptors
         std::vector<cv::KeyPoint> frameKeypoints;
-        cv::cuda::GpuMat frameDescriptors;
-        CudaDetector -> detectAndCompute(newFrameGpuGray, cv::cuda::GpuMat(), frameKeypoints, frameDescriptors);
+        cv::cuda::GpuMat frameDescriptorsGpu;
+        CudaDetector -> detectAndCompute(newImgFrameGpuGray, cv::cuda::GpuMat(), frameKeypoints, frameDescriptorsGpu);
 
         //store descriptors and keypoints
-        descriptors.push_back(frameDescriptors);
-        keyPoints.push_back(frameKeypoints);
+        frames.push_back(frame(frameKeypoints));
+        //todo store descriptors;
 
         //matches in from the new frame
+
         cv::cuda::GpuMat newMatchsGpu;
         std::vector<std::vector<cv::DMatch>> newMatchs;
-        if (descriptors.size() > 1)
+
+        if (frames.size() > 1)
         {
+/*
             //find matches
             matcher -> knnMatchAsync(descriptors[descriptors.size() - 1], descriptors[descriptors.size() - 2], newMatchsGpu, 1);
             matcher -> knnMatchConvert(newMatchsGpu, newMatchs, false);
 
             matchs.push_back(newMatchs);
+
 
             if (matchForCamPose(keyMatch, newMatchs, keyPoints))
             {
@@ -161,10 +182,11 @@ void camPoseFromVideo()
                     camera.updateRT(Rs[solutionNum],ts[solutionNum]);
                     camera.updateWrP(camera);
                 }
-                else
                 {
+                else
                     std::cout << "no soluion found" << std::endl;
                 }
+
             }
             else
             {
@@ -173,13 +195,23 @@ void camPoseFromVideo()
                 std::cout << "failed to find enough points, last frame erased" << std::endl;
             }
 
-            cv::drawMatches(newFrame, keyPoints[keyPoints.size() - 1], oldFrame, keyPoints[keyPoints.size() - 2], newMatchs, drawFrame);
-            newFrameGpu.upload(drawFrame);
-            cv::imshow("cudaFeature", newFrameGpu);
+
+            cv::drawMatches(newImgFrame, keyPoints[keyPoints.size() - 1], oldFrame, keyPoints[keyPoints.size() - 2], newMatchs, drawFrame);
+            newImgFrameGpu.upload(drawFrame);
+            cv::imshow("cudaFeature", newImgFrameGpu);
+*/
+        }
+        else
+        {
+            keyframe newKeyframe(frames[frames.size()-1]);
+            frames.pop_back();
+            frames.push_back(newKeyframe);
         }
 
+        std::cout << frames[frames.size() - 1].keyPoint.size() << std::endl;
+
         if (cv::waitKey(30) == 27) break;
-        oldFrame = newFrame;
+        oldFrame = newImgFrame;
     }
 
 }
