@@ -7,33 +7,31 @@
 #ifndef fm_h
 #define fm_h
 
-class frame
+class frame_
 {
 public:
-    frame * keyframe = NULL; //pointer to keyframe current frame matched to
-    std::vector<cv::KeyPoint> keyPoint;
-    frame(std::vector<cv::KeyPoint> & inKeyPoints)
+    int keyframe; //index to keyframe current frame matched to
+    std::vector<cv::KeyPoint> keypoint;
+    cv::cuda::GpuMat descriptors;
+    cv::Mat keypointToKeyframe; //the keypoint matrix aligned with keyframe
+    cv::Mat keypointAsFrame; //only used when the frame is created as keyframe
+
+    frame_ (const std::vector<cv::KeyPoint> & inKeypoints)
     {
-        keyPoint = inKeyPoints;
+        keypoint = inKeypoints;
         return;
     }
+
+    frame_ (const std::vector<cv::KeyPoint> & inKeypoints, cv::cuda::GpuMat & inMat)
+    {
+        keypoint = inKeypoints;
+        descriptors = inMat;
+        return;
+    }
+
+    std::vector<cv::KeyPoint>
+
 };
 
-class keyframe : public frame
-{
-public:
-    cv::cuda::GpuMat descriptors;
-    keyframe(frame base):frame(base)
-    {
-        //keyframe = -1;
-        return;
-    }
-    keyframe(const frame & baseFrame, cv::cuda::GpuMat & inMat):frame(baseFrame)
-    {
-        descriptors = inMat;
-        //keyframeIdx = -1;
-        return;
-    }
-};
 
 #endif
