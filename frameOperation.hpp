@@ -21,7 +21,7 @@ void vecKeypointToMatKeypoint(cv::Mat & matKeypoints, const std::vector<cv::KeyP
 
 cv::Mat vecKeypointToMatKeypoint(const std::vector<cv::KeyPoint> & vecKeypoints);
 
-double calKeyPointDist(const cv::KeyPoint & pt1, const cv::KeyPoint & pt2);
+double calKeypointDist(const cv::KeyPoint & pt1, const cv::KeyPoint & pt2);
 
 
 #endif

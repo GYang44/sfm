@@ -49,7 +49,6 @@ Tp printMat(const cv::Mat & mat)
     return 0;
 }
 
-
 //void camPoseFromVideo(environment & workEnv)
 void camPoseFromVideo()
 {
@@ -61,14 +60,15 @@ void camPoseFromVideo()
     cv::cuda::setDevice(0);
 
     //create feature detector
-    cv::Ptr<cv::cuda::ORB> CudaDetector = cv::cuda::ORB::create(2000, 1.2f, 8, 31, 0, 2, 0, 31, 20, true);
+    cv::Ptr<cv::cuda::ORB> CudaDetector = cv::cuda::ORB::create(500, 1.2f, 8, 31, 0, 2, 0, 31, 20, true);
 
     //tmp variable for frame handling
     cv::cuda::GpuMat newImgFrameGpu, newImgFrameGpuGray;
     cv::Mat newImgFrame;
 
     //frames of keypoints and descriptors for entire video
-    std::vector<frame_> frames;
+    std::vector<frame> frames;
+    std::vector<cv::Mat>  segmentFrames;
 
     //all matches
     std::vector<std::vector<std::vector<cv::DMatch>>> matchs;
@@ -92,13 +92,14 @@ void camPoseFromVideo()
         CudaDetector -> detectAndCompute(newImgFrameGpuGray, cv::cuda::GpuMat(), frameKeypoints, frameDescriptorsGpu);
 
         //create new regular frame with detected keypoints
-        frames.push_back(frame_(frameKeypoints));
+        frames.push_back(frame(frameKeypoints));
 
         //matches in from the new frame
         cv::cuda::GpuMat newMatchsGpu;
 
         std::vector<std::vector<cv::DMatch>> newMatchs;
 
+        // check if its the first frame;
         if (frames.size() > 1)
         {
             //specify key frame for current frame
@@ -108,51 +109,59 @@ void camPoseFromVideo()
             matcher -> knnMatchAsync(frameDescriptorsGpu, frames[frames[frames.size() - 2].keyframe].descriptors, newMatchsGpu, 1);
             matcher -> knnMatchConvert(newMatchsGpu, newMatchs, false);
 
-            //std::cout << frameDescriptorsGpu.size().height << ' ' << frames[frames[frames.size() - 2].keyframe].descriptors.size().height << ' ' << newMatchs.size() << std::endl;
-            int matched = matchFrame(frames[frames[frames.size() - 2].keyframe], frames[frames.size() - 1], newMatchs);
-/*
-            if (matchForCamPose(keyMatch, newMatchs, keyPoints))
+            //matched keypoint after remove outliner
+            int matchedKeypoint = matchForCamPose(frames[frames[frames.size() - 2].keyframe], frames[frames.size() - 1], newMatchs);
+
+            // if not add new key frame
+            if (matchedKeypoint <= 10)
             {
-                cv::Mat F;
-                cv::sfm::normalizedEightPointSolver(keyMatch[keyMatch.size() - 1], keyMatch[keyMatch.size() - 2], F);
-                cv::Mat E;
-                cv::sfm::essentialFromFundamental(F, workEnv.cameraMatrix, workEnv.cameraMatrix, E);
-                std::vector<cv::Mat> Rs,ts;//candidates for correct Rotation and translation matrices
-                cv::sfm::motionFromEssential(E, Rs, ts);
-                int solutionNum = cv::sfm::motionFromEssentialChooseSolution(Rs, ts, workEnv.cameraMatrix, keyMatch[keyMatch.size() - 1](cv::Range(0,2),cv::Range(0,1)), workEnv.cameraMatrix, keyMatch[keyMatch.size() - 2](cv::Range(0,2),cv::Range(0,1)));
 
-                if(solutionNum >= 0)
+                if (matchedKeypoint < 7)
                 {
-                    camera.updateRT(Rs[solutionNum],ts[solutionNum]);
-                    camera.updateWrP(camera);
+                    std::cout << "failed to find enough points, last frame erased" << std::endl;
+                    frames.pop_back();
                 }
-                {
                 else
-                    std::cout << "no soluion found" << std::endl;
-                }
+                {
+                    std::cout << "start a new local reconstruction" << std::endl;
+                    // add new keyframe and reconstruct
+                    std::vector<cv::Mat> Rs, Ts, point3d;
+                    cv::sfm::reconstruct(segmentFrames, Rs, Ts, workEnv.cameraMatrix, point3d, true);
+                    for (int i(0); i < Rs.size(); i++)
+                    {
+                        printMat<double>(Rs[i]);
+                        printMat<double>(Ts[i]);
+                    }
+                    //getchar();
 
+                    // todo use multithread methods
+
+                    // reset segmentFrames after reconstruction
+                    segmentFrames.clear();
+                    segmentFrames.push_back(frames[frames.size() - 1].keypointAsKeyframe);
+                }
             }
             else
             {
-
-                descriptors.erase(descriptors.end());
-                std::cout << "failed to find enough points, last frame erased" << std::endl;
+                // add keypoints of a regular frame to the segment
+                segmentFrames.push_back(frames[frames.size() - 1].keypointToKeyframe);
+                std::cout << "just another frame" << std::endl;
             }
 
 
-            cv::drawMatches(newImgFrame, keyPoints[keyPoints.size() - 1], oldFrame, keyPoints[keyPoints.size() - 2], newMatchs, drawFrame);
+
+            cv::drawMatches(newImgFrame, frames[frames.size() - 1].keypoint, oldFrame, frames[frames.size() - 2].keypoint, newMatchs, drawFrame);
             newImgFrameGpu.upload(drawFrame);
             cv::imshow("cudaFeature", newImgFrameGpu);
-*/
+
         }
+        // create keyframe if it's the first frame
         else
         {
             //create first frame as key frame
             frameDescriptorsGpu.copyTo(frames[0].descriptors);
             frames[0].keyframe = 0;
         }
-
-        //std::cout << frames[frames.size() - 1].keyPoint.size() << std::endl;
 
         if (cv::waitKey(30) == 27) break;
         oldFrame = newImgFrame;

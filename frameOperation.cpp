@@ -1,4 +1,4 @@
-#inlude "frameOperation"
+#include "frameOperation.hpp"
 
 int formatKeypoints(const std::vector<cv::KeyPoint> & inPointsKeyframe, const std::vector<cv::KeyPoint> & inPointsNewframe, const std::vector<std::vector<cv::DMatch>> & inMatch, std::vector<cv::KeyPoint> & outKeyPoints, const double & distanceThreshold)
 //create array of corresponding points for camera pose estimation
@@ -27,13 +27,13 @@ int formatKeypoints(const std::vector<cv::KeyPoint> & inPointsKeyframe, const st
 int formatKeypoints(const std::vector<cv::KeyPoint> & inPointsKeyframe, const std::vector<cv::KeyPoint> & inPointsNewframe, const std::vector<std::vector<cv::DMatch>> & inMatch, std::vector<cv::KeyPoint> & outKeyPoints)
 //create keypoints for camera pose estimation
 {
-    return formatKeypoints(inPointsKeyframe, inPointsNewframe, inMatch, outKeyPoints, 20);
+    return formatKeypoints(inPointsKeyframe, inPointsNewframe, inMatch, outKeyPoints, 50);
 }
 
 int matchForCamPose(const frame & keyframe, frame & newFrame, const std::vector<std::vector<cv::DMatch>> & inMatch)
 {
     std::vector<cv::KeyPoint> tmpAlign;
-    int matchCount = formatKeypoints(keyframe.keypoints, newFrame.keypoints, inMatch, tmpAlign);
+    int matchCount = formatKeypoints(keyframe.keypoint, newFrame.keypoint, inMatch, tmpAlign);
     //todo convert tmp algin based matched count
     if (matchCount > 7)
     {
@@ -43,7 +43,7 @@ int matchForCamPose(const frame & keyframe, frame & newFrame, const std::vector<
         if (matchCount < 20)
         {
             //create newKeyframe
-            newFrame.keypointAsFrame = vecKeypointToMatKeypoint(newFrame.keypoint);
+            newFrame.keypointAsKeyframe = vecKeypointToMatKeypoint(newFrame.keypoint);
         }
     }
     return matchCount;
@@ -67,7 +67,7 @@ cv::Mat vecKeypointToMatKeypoint(const std::vector<cv::KeyPoint> & vecKeypoints)
 }
 
 
-double calKeyPointDist(const cv::KeyPoint & pt1, const cv::KeyPoint & pt2)
+double calKeypointDist(const cv::KeyPoint & pt1, const cv::KeyPoint & pt2)
 {
     return sqrt(pow((pt1.pt.x - pt2.pt.x),2) + pow((pt1.pt.y - pt2.pt.y),2));
 }
