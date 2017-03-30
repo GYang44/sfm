@@ -35,7 +35,7 @@ float zRot = 30.0f;
 
 
 template<typename Tp>
-Tp printMat(const cv::Mat & mat)
+void printMat(const cv::Mat & mat)
 {
     std::cout << std::endl;
     for (int row(0); row < mat.size().height; row++)
@@ -46,7 +46,7 @@ Tp printMat(const cv::Mat & mat)
         }
         std::cout << std::endl;
     }
-    return 0;
+    return;
 }
 
 //void camPoseFromVideo(environment & workEnv)
@@ -60,7 +60,7 @@ void camPoseFromVideo()
     cv::cuda::setDevice(0);
 
     //create feature detector
-    cv::Ptr<cv::cuda::ORB> CudaDetector = cv::cuda::ORB::create(500, 1.2f, 8, 31, 0, 2, 0, 31, 20, true);
+    cv::Ptr<cv::cuda::ORB> CudaDetector = cv::cuda::ORB::create(200, 1.2f, 8, 31, 0, 2, 0, 31, 20, true);
 
     //tmp variable for frame handling
     cv::cuda::GpuMat newImgFrameGpu, newImgFrameGpuGray;
@@ -113,7 +113,7 @@ void camPoseFromVideo()
             int matchedKeypoint = matchForCamPose(frames[frames[frames.size() - 2].keyframe], frames[frames.size() - 1], newMatchs);
 
             // if not add new key frame
-            if (matchedKeypoint <= 10)
+            if (matchedKeypoint <= 10 | segmentFrames.size() >= 5)
             {
 
                 if (matchedKeypoint < 7)
@@ -129,12 +129,9 @@ void camPoseFromVideo()
                     cv::sfm::reconstruct(segmentFrames, Rs, Ts, workEnv.cameraMatrix, point3d, true);
                     for (int i(0); i < Rs.size(); i++)
                     {
-                        printMat<double>(Rs[i]);
-                        printMat<double>(Ts[i]);
+                        camera.updateRT(Rs[i], Ts[i]);
+                        camera.updateWrP(camera);
                     }
-                    //getchar();
-
-                    // todo use multithread methods
 
                     // reset segmentFrames after reconstruction
                     segmentFrames.clear();
