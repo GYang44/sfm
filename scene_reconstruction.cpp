@@ -60,7 +60,7 @@ void camPoseFromVideo()
     cv::cuda::setDevice(0);
 
     //create feature detector
-    cv::Ptr<cv::cuda::ORB> CudaDetector = cv::cuda::ORB::create(200, 1.2f, 8, 31, 0, 2, 0, 31, 20, true);
+    cv::cuda::SURF_CUDA CudaDetector(10);
 
     //tmp variable for frame handling
     cv::cuda::GpuMat newImgFrameGpu, newImgFrameGpuGray;
@@ -70,14 +70,9 @@ void camPoseFromVideo()
     std::vector<frame> frames;
     std::vector<cv::Mat>  segmentFrames;
 
-    //all matches
-    std::vector<std::vector<std::vector<cv::DMatch>>> matchs;
-
-    cv::Ptr<cv::cuda::DescriptorMatcher> matcher = cv::cuda::DescriptorMatcher::createBFMatcher(cv::NORM_HAMMING);
+    cv::Ptr<cv::cuda::DescriptorMatcher> matcher = cv::cuda::DescriptorMatcher::createBFMatcher(cv::NORM_L2);
 
     cv::Mat oldFrame, drawFrame;
-
-    const double distThreshold = sqrt(pow(640, 2) + pow(480, 2));
 
     while(workEnv.video.grab())
     {
@@ -89,7 +84,7 @@ void camPoseFromVideo()
         //detect keypoints and compute descriptors
         std::vector<cv::KeyPoint> frameKeypoints;
         cv::cuda::GpuMat frameDescriptorsGpu;
-        CudaDetector -> detectAndCompute(newImgFrameGpuGray, cv::cuda::GpuMat(), frameKeypoints, frameDescriptorsGpu);
+        CudaDetector(newImgFrameGpuGray, cv::cuda::GpuMat(), frameKeypoints, frameDescriptorsGpu);
 
         //create new regular frame with detected keypoints
         frames.push_back(frame(frameKeypoints));
@@ -144,8 +139,6 @@ void camPoseFromVideo()
                 segmentFrames.push_back(frames[frames.size() - 1].keypointToKeyframe);
                 std::cout << "just another frame" << std::endl;
             }
-
-
 
             cv::drawMatches(newImgFrame, frames[frames.size() - 1].keypoint, oldFrame, frames[frames.size() - 2].keypoint, newMatchs, drawFrame);
             newImgFrameGpu.upload(drawFrame);

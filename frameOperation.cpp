@@ -27,7 +27,7 @@ int formatKeypoints(const std::vector<cv::KeyPoint> & inPointsKeyframe, const st
 int formatKeypoints(const std::vector<cv::KeyPoint> & inPointsKeyframe, const std::vector<cv::KeyPoint> & inPointsNewframe, const std::vector<std::vector<cv::DMatch>> & inMatch, std::vector<cv::KeyPoint> & outKeyPoints)
 //create keypoints for camera pose estimation
 {
-    return formatKeypoints(inPointsKeyframe, inPointsNewframe, inMatch, outKeyPoints, 50);
+    return formatKeypoints(inPointsKeyframe, inPointsNewframe, inMatch, outKeyPoints, 20);
 }
 
 int matchForCamPose(const frame & keyframe, frame & newFrame, const std::vector<std::vector<cv::DMatch>> & inMatch)
