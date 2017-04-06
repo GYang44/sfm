@@ -24,6 +24,7 @@
 #include "object3D.hpp"
 #include "frame.hpp"
 #include "frameOperation.hpp"
+#include "debugger.hpp"
 
 //camera view point (angle)
 object3D camera;
@@ -32,22 +33,6 @@ object3D camera;
 float xRot = -70.0f;
 float yRot = 0.0f;
 float zRot = 30.0f;
-
-
-template<typename Tp>
-void printMat(const cv::Mat & mat)
-{
-    std::cout << std::endl;
-    for (int row(0); row < mat.size().height; row++)
-    {
-        for (int col(0); col < mat.size().width; col++)
-        {
-            std::cout << mat.at<Tp>(row,col) << ' ';
-        }
-        std::cout << std::endl;
-    }
-    return;
-}
 
 //void camPoseFromVideo(environment & workEnv)
 void camPoseFromVideo()
@@ -120,6 +105,7 @@ void camPoseFromVideo()
                 {
                     std::cout << "start a new local reconstruction" << std::endl;
                     // add new keyframe and reconstruct
+                    /*
                     std::vector<cv::Mat> Rs, Ts, point3d;
                     cv::sfm::reconstruct(segmentFrames, Rs, Ts, workEnv.cameraMatrix, point3d, true);
                     for (int i(0); i < Rs.size(); i++)
@@ -127,10 +113,11 @@ void camPoseFromVideo()
                         camera.updateRT(Rs[i], Ts[i]);
                         camera.updateWrP(camera);
                     }
-
+                    */
                     // reset segmentFrames after reconstruction
                     segmentFrames.clear();
                     segmentFrames.push_back(frames[frames.size() - 1].keypointAsKeyframe);
+
                 }
             }
             else
@@ -151,10 +138,11 @@ void camPoseFromVideo()
             //create first frame as key frame
             frameDescriptorsGpu.copyTo(frames[0].descriptors);
             frames[0].keyframe = 0;
+            oldFrame = newImgFrame;
         }
 
         if (cv::waitKey(30) == 27) break;
-        oldFrame = newImgFrame;
+
     }
 
 }

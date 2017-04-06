@@ -1,4 +1,5 @@
 #include "frameOperation.hpp"
+#include "debugger.hpp"
 
 int formatKeypoints(const std::vector<cv::KeyPoint> & inPointsKeyframe, const std::vector<cv::KeyPoint> & inPointsNewframe, const std::vector<std::vector<cv::DMatch>> & inMatch, std::vector<cv::KeyPoint> & outKeyPoints, const double & distanceThreshold)
 //create array of corresponding points for camera pose estimation
@@ -11,7 +12,6 @@ int formatKeypoints(const std::vector<cv::KeyPoint> & inPointsKeyframe, const st
         int newFrameKeypointNum = inMatch[inMatchCt][0].queryIdx;//get matched point from new frame
         if ( calKeypointDist(inPointsKeyframe[inMatchCt], inPointsNewframe[newFrameKeypointNum]) <= distanceThreshold)
         {
-            //pointSet1.push_back(cv::Mat(cv::Vec<double, 2>(inKeyPoints[inKeyPoints.size() - 2][inMatchCt].pt.x, inKeyPoints[inKeyPoints.size() - 2][inMatchCt].pt.y)).t());
             outKeyPoints.push_back(inPointsNewframe[newFrameKeypointNum]); //store matched points from current frame
             matchedCount ++;
         }
@@ -40,7 +40,26 @@ int matchForCamPose(const frame & keyframe, frame & newFrame, const std::vector<
         // store match to keyframe
         newFrame.keypointToKeyframe = vecKeypointToMatKeypoint(tmpAlign);
 
-        if (matchCount < 20)
+        if (matchCount <= 10)
+        {
+            //create newKeyframe
+            newFrame.keypointAsKeyframe = vecKeypointToMatKeypoint(newFrame.keypoint);
+        }
+    }
+    return matchCount;
+}
+
+int matchForCamPoseDrawMatch(const frame & keyframe, frame & newFrame, const std::vector<std::vector<cv::DMatch>> & inMatch)
+{
+    std::vector<cv::KeyPoint> tmpAlign;
+    int matchCount = formatKeypoints(keyframe.keypoint, newFrame.keypoint, inMatch, tmpAlign);
+    //todo convert tmp algin based matched count
+    if (matchCount > 7)
+    {
+        // store match to keyframe
+        newFrame.keypointToKeyframe = vecKeypointToMatKeypoint(tmpAlign);
+
+        if (matchCount <= 10)
         {
             //create newKeyframe
             newFrame.keypointAsKeyframe = vecKeypointToMatKeypoint(newFrame.keypoint);
@@ -65,7 +84,6 @@ cv::Mat vecKeypointToMatKeypoint(const std::vector<cv::KeyPoint> & vecKeypoints)
     vecKeypointToMatKeypoint(matKeypoints, vecKeypoints);
     return matKeypoints;
 }
-
 
 double calKeypointDist(const cv::KeyPoint & pt1, const cv::KeyPoint & pt2)
 {
