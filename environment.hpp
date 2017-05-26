@@ -1,8 +1,12 @@
-#include <opencv2/highgui.hpp>
-#include <opencv2/opencv.hpp>
-#include <stdio.h>
 #include <iostream>
 #include <string>
+#include <stdio.h>
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+
+#include "debugger.hpp"
 
 #ifndef ENVIRONMENT_H
 #define ENVIRONMENT_H
@@ -14,6 +18,7 @@ public:
 	cv::Mat cameraMatrix;//K
 	cv::Mat cameraDistCoeffs;
 	environment(std::string inFile);
+	cv::Mat map1, map2;
 };
 
 environment::environment(std::string inFile)
@@ -28,9 +33,15 @@ environment::environment(std::string inFile)
 
 	//get camera matrix
 	fs.open(cameraSpec, cv::FileStorage::READ);
-	fs["Camera_Matrix"] >> cameraMatrix;
-	fs["Distortion_Coefficients"] >> cameraDistCoeffs;
+	fs["camera_matrix"] >> cameraMatrix;
+	fs["distortion_coefficients"] >> cameraDistCoeffs;
+
+	int width, height;
+	fs["image_width"] >> width;
+	fs["image_height"] >> height;
 	fs.release();
+
+	cv::initUndistortRectifyMap(cameraMatrix, cameraDistCoeffs, cv::Matx33d::eye(), cameraMatrix, cv::Size2i(width, height), CV_32FC1, map1, map2);
 
 	//get video
 	if (videoPath.size() != 0)
