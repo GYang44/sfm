@@ -1,6 +1,9 @@
 #include <iostream>
 #include <opencv2/core.hpp>
 
+#ifndef debugger_h
+#define debugger_h
+
 template<typename Tp>
 void printMat(const cv::Mat & mat)
 {
@@ -15,3 +18,5 @@ void printMat(const cv::Mat & mat)
     }
     return;
 }
+
+#endif
