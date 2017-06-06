@@ -17,6 +17,6 @@ void printMat(const cv::Mat & mat)
         std::cout << std::endl;
     }
     return;
-}
+};
 
 #endif

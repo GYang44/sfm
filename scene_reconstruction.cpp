@@ -6,7 +6,6 @@
 #include <thread>
 
 #include <opencv2/sfm.hpp>
-#include <opencv2/viz.hpp>
 #include <opencv2/calib3d.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -18,6 +17,7 @@
 #include <opencv2/xfeatures2d.hpp>
 
 #include <opencv2/sfm.hpp>
+#include <opencv2/sfm/robust.hpp>
 
 #include "environment.hpp"
 #include "glVisualizer.hpp"
@@ -79,7 +79,8 @@ void camPoseFromVideo()
     workEnv.retrieve(*newFrameImg);
 
     // check if its the first frame;
-    if ((frameCount % 10 == 1))
+    //if ((frameCount % 10 == 1))
+    if ((frameCount % 6 == 1))
     {
       newFrameGpu.upload(*newFrameImg);
       cv::cuda::cvtColor(newFrameGpu, newFrameGpuGray, CV_RGB2GRAY);
@@ -88,20 +89,34 @@ void camPoseFromVideo()
       CudaDetector(newFrameGpuGray, cv::cuda::GpuMat(), *newFrameKeypoints, *newFrameDescriptorsGpu);
 
       //matches
-      cv::cuda::GpuMat newMatchsGpu;
-      std::vector<std::vector<cv::DMatch>> newMatchs;
+      cv::cuda::GpuMat newMatchesGpu;
+      std::vector<std::vector<cv::DMatch>> newMatches;
 
       if (!(oldFrameImg -> empty()))
       {
-        //find matches, in newMatchsGpu or newMatchs, the first element contains the candidates in second descriptors matching to first element in first descriptor
-        matcher -> knnMatchAsync(*newFrameDescriptorsGpu, *oldFrameDescriptorsGpu, newMatchsGpu, 1);
-        matcher -> knnMatchConvert(newMatchsGpu, newMatchs, false);
+        //find matches, newFrame is query, oldFrame is train
+        matcher -> knnMatchAsync(*newFrameDescriptorsGpu, *oldFrameDescriptorsGpu, newMatchesGpu, 1);
+        matcher -> knnMatchConvert(newMatchesGpu, newMatches, false);
 
-        //remove outliner
-        //int matchedKeypoint = rmOutliner(*oldFrameKeypoints, *newFrameKeypoints, newMatchs);
+        //remove outliner from matchvector
+        rmOutliner(*newFrameKeypoints, *oldFrameKeypoints, newMatches, 40);
 
-        cv::drawMatches(*newFrameImg, *newFrameKeypoints, *oldFrameImg, *oldFrameKeypoints, newMatchs, drawFrame);
+        //get keypoints that match
+        std::vector<cv::KeyPoint> queryVec, trainVec;
+        getMatchedKeypoints(*newFrameKeypoints, *oldFrameKeypoints, newMatches, queryVec, trainVec);
 
+        //format keypoints
+        cv::Mat queryMat, trainMat;
+        vecKeypointToMatKeypoint(queryMat, queryVec);
+        vecKeypointToMatKeypoint(trainMat, trainVec);
+
+        //get fundamental matrix
+        cv::Mat F, inLiers;
+        cv::sfm::fundamentalFromCorrespondences8PointRobust(queryMat, trainMat, 40, F, inLiers, 0.02);
+        //printMat<double>(F);
+
+        //visualize matches
+        cv::drawMatches(*newFrameImg, *newFrameKeypoints, *oldFrameImg, *oldFrameKeypoints, newMatches, drawFrame);
         cv::imshow("matches", drawFrame);
         char inChar = cv::waitKey();
         if (inChar == 27) return;
@@ -112,7 +127,12 @@ void camPoseFromVideo()
       swapPointer(oldFrameDescriptorsGpu, newFrameDescriptorsGpu);
     }
   }
-  delete newFrameImg, oldFrameImg, oldFrameDescriptorsGpu, newFrameDescriptorsGpu, newFrameKeypoints, oldFrameKeypoints;
+  if (newFrameImg != NULL) delete newFrameImg;
+  if (oldFrameImg != NULL) delete oldFrameImg;
+  if (newFrameDescriptorsGpu != NULL) delete newFrameDescriptorsGpu;
+  if (oldFrameDescriptorsGpu != NULL) delete oldFrameDescriptorsGpu;
+  if (newFrameKeypoints != NULL) delete newFrameKeypoints;
+  if (oldFrameKeypoints != NULL) delete oldFrameKeypoints;
   return;
 }
 

@@ -1,7 +1,7 @@
 #include "frameOperation.hpp"
 #include "debugger.hpp"
 
-int formatKeypoints(const std::vector<cv::KeyPoint> & inPointsKeyframe, const std::vector<cv::KeyPoint> & inPointsNewframe, const std::vector<std::vector<cv::DMatch>> & inMatch, std::vector<cv::KeyPoint> & outKeyPoints, const double & distanceThreshold)
+int forkeypointsMat(const std::vector<cv::KeyPoint> & inPointsKeyframe, const std::vector<cv::KeyPoint> & inPointsNewframe, const std::vector<std::vector<cv::DMatch>> & inMatch, std::vector<cv::KeyPoint> & outKeyPoints, const double & distanceThreshold)
 //create array of corresponding points for camera pose estimation
 {
   outKeyPoints.clear();
@@ -24,16 +24,16 @@ int formatKeypoints(const std::vector<cv::KeyPoint> & inPointsKeyframe, const st
 
 }
 
-int formatKeypoints(const std::vector<cv::KeyPoint> & inPointsKeyframe, const std::vector<cv::KeyPoint> & inPointsNewframe, const std::vector<std::vector<cv::DMatch>> & inMatch, std::vector<cv::KeyPoint> & outKeyPoints)
+int forkeypointsMat(const std::vector<cv::KeyPoint> & inPointsKeyframe, const std::vector<cv::KeyPoint> & inPointsNewframe, const std::vector<std::vector<cv::DMatch>> & inMatch, std::vector<cv::KeyPoint> & outKeyPoints)
 //create keypoints for camera pose estimation
 {
-  return formatKeypoints(inPointsKeyframe, inPointsNewframe, inMatch, outKeyPoints, 20);
+  return forkeypointsMat(inPointsKeyframe, inPointsNewframe, inMatch, outKeyPoints, 20);
 }
 
 int matchForCamPose(const frame & keyframe, frame & newFrame, const std::vector<std::vector<cv::DMatch>> & inMatch)
 {
   std::vector<cv::KeyPoint> tmpAlign;
-  int matchCount = formatKeypoints(keyframe.keypoint, newFrame.keypoint, inMatch, tmpAlign);
+  int matchCount = forkeypointsMat(keyframe.keypoint, newFrame.keypoint, inMatch, tmpAlign);
   //todo convert tmp algin based matched count
   if (matchCount > 7)
   {
@@ -52,7 +52,7 @@ int matchForCamPose(const frame & keyframe, frame & newFrame, const std::vector<
 int matchForCamPoseDrawMatch(const frame & keyframe, frame & newFrame, std::vector<std::vector<cv::DMatch>> & inMatch)
 {
   std::vector<cv::KeyPoint> tmpAlign;
-  int matchCount = formatKeypoints(keyframe.keypoint, newFrame.keypoint, inMatch, tmpAlign);
+  int matchCount = forkeypointsMat(keyframe.keypoint, newFrame.keypoint, inMatch, tmpAlign);
   //todo convert tmp algin based matched count
   if (matchCount > 7)
   {
@@ -68,21 +68,21 @@ int matchForCamPoseDrawMatch(const frame & keyframe, frame & newFrame, std::vect
   return matchCount;
 }
 
-void vecKeypointToMatKeypoint(cv::Mat & matKeypoints, const std::vector<cv::KeyPoint> & vecKeypoints)
+void vecKeypointToMatKeypoint(cv::Mat & keypointsMat, const std::vector<cv::KeyPoint> & keypointsVec)
 {
-  for (std::vector<cv::KeyPoint>::const_iterator keypointIt = vecKeypoints.begin(); keypointIt != vecKeypoints.end(); keypointIt++)
+  for (std::vector<cv::KeyPoint>::const_iterator keypointIt = keypointsVec.begin(); keypointIt != keypointsVec.end(); keypointIt++)
   {
-    matKeypoints.push_back(cv::Mat(cv::Vec<double, 2>( keypointIt -> pt.x, keypointIt -> pt.y)).t());
+    keypointsMat.push_back(cv::Mat(cv::Vec<double, 2>( keypointIt -> pt.x, keypointIt -> pt.y)).t());
   }
-  matKeypoints = matKeypoints.t(); //return a 2 by n matrix
+  keypointsMat = keypointsMat.t(); //return a 2 by n matrix
   return;
 }
 
-cv::Mat vecKeypointToMatKeypoint(const std::vector<cv::KeyPoint> & vecKeypoints)
+cv::Mat vecKeypointToMatKeypoint(const std::vector<cv::KeyPoint> & keypointsVec)
 {
-  cv::Mat matKeypoints;
-  vecKeypointToMatKeypoint(matKeypoints, vecKeypoints);
-  return matKeypoints;
+  cv::Mat keypointsMat;
+  vecKeypointToMatKeypoint(keypointsMat, keypointsVec);
+  return keypointsMat;
 }
 
 double calKeypointDist(const cv::KeyPoint & pt1, const cv::KeyPoint & pt2)
@@ -91,34 +91,49 @@ double calKeypointDist(const cv::KeyPoint & pt1, const cv::KeyPoint & pt2)
 }
 
 //new frame is query frame old frame is train frame
-int rmOutliner( std::vector<cv::KeyPoint> & inKeypointsNewframe, std::vector<cv::KeyPoint> & inKeypointsOldframe, std::vector<std::vector<cv::DMatch>> & inMatchs)
+int rmOutliner( std::vector<cv::KeyPoint> & inKeypointsNewframe, std::vector<cv::KeyPoint> & inKeypointsOldframe, std::vector<std::vector<cv::DMatch>> & inMatches, const int & threshold)
 {
   if (inKeypointsOldframe.empty() | inKeypointsNewframe.empty()) return 0;
   int matchCount(0);
-  std::vector<cv::KeyPoint> keyFrameNew, newFrameNew;
-  std::vector<std::vector<cv::DMatch>> inMatchNew;
 
-  for (int inMatchCt(0); inMatchCt < inMatchs.size(); inMatchCt++)
+  std::vector<std::vector<cv::DMatch>> matchUpdated;
+
+  for (uint queryIdx(0); queryIdx < inMatches.size(); queryIdx++)
   {
-    int newFrameKeypointNum = inMatchs[inMatchCt][0].queryIdx;//get matched point from new frame
-    if ( calKeypointDist(inKeypointsOldframe[inMatchCt], inKeypointsNewframe[newFrameKeypointNum]) <= 40)
+    int trainIdx = inMatches[queryIdx][0].trainIdx;//get matched point from new frame
+    if ( calKeypointDist(inKeypointsOldframe[trainIdx], inKeypointsNewframe[queryIdx]) <= threshold)
     {
-      keyFrameNew.push_back(inKeypointsNewframe[newFrameKeypointNum]);
-      newFrameNew.push_back(inKeypointsOldframe[inMatchCt]);
 
-      cv::DMatch newMatchEntry(matchCount, matchCount, inMatchs[inMatchCt][0].distance);
+      cv::DMatch newMatchEntry(queryIdx, trainIdx, inMatches[queryIdx][0].distance);
       std::vector<cv::DMatch> matchTmp;
       matchTmp.push_back(newMatchEntry);
 
-      inMatchNew.push_back(matchTmp);
+      matchUpdated.push_back(matchTmp);
 
       matchCount ++;
     }
   }
 
-  inKeypointsOldframe = keyFrameNew;
-  inKeypointsNewframe = newFrameNew;
-  inMatchs = inMatchNew;
+  inMatches = matchUpdated;
 
   return matchCount;
+}
+
+//query usually is occupided by keypoints from newFrame, train by oldFrame
+void getMatchedKeypoints(const std::vector<cv::KeyPoint> & query, const std::vector<cv::KeyPoint> & train, const std::vector<std::vector<cv::DMatch>> & matches, std::vector<cv::KeyPoint> & queryNew, std::vector<cv::KeyPoint> & trainNew)
+{
+  trainNew.clear();
+  queryNew.clear();
+
+  int queryIdx, trainIdx;
+
+  for(int matchIdx(0); matchIdx < matches.size(); matchIdx++)
+  {
+    trainIdx = matches[matchIdx][0].trainIdx;
+    queryIdx = matches[matchIdx][0].queryIdx;
+    trainNew.push_back(train[trainIdx]);
+    queryNew.push_back(query[queryIdx]);
+  }
+
+  return;
 }

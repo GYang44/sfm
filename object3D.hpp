@@ -30,9 +30,9 @@ public:
 	static void cvMatToArmaMat(const cv::Mat & cvMat, arma::Mat<double> & armaMat)
 	{
 		cv::MatConstIterator_<double> cvMatIt = cvMat.begin<double>();
-		for (uint row(0); row < cvMat.size().height; row++)
+		for (int row(0); row < cvMat.size().height; row++)
 		{
-			for (uint col(0); col < cvMat.size().width; col++)
+			for (int col(0); col < cvMat.size().width; col++)
 			{
 				armaMat(row,col) = *cvMatIt++;
 			}

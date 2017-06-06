@@ -127,7 +127,7 @@ bool sfmEnv::sample(const uint sampleRate, const uint sampleNumber)
 
 	cv::Mat newFrame;
 
-	for(uint framCounter(0), sampleCounter(1);(video.grab() & sampleCounter<= sampleNumber);++framCounter)
+	for(uint framCounter(0), sampleCounter(1);( video.grab() & (sampleCounter <= sampleNumber));++framCounter)
 	{
 		video.retrieve(newFrame);
 		if (framCounter % sampleRate == 1)
