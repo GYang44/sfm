@@ -108,6 +108,10 @@ sfmEnv::sfmEnv(std::string inFile):environment(inFile)
 {
 	cv::FileStorage fs(inFile, cv::FileStorage::READ);
 	fs["samplePath"] >> samplePath;
+	if (samplePath.size() == 0)
+	{
+		std::cout << "no sample path specified" << std::endl;
+	}
 	fs.release();
 	return;
 }

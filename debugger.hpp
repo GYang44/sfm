@@ -4,7 +4,7 @@
 #ifndef debugger_h
 #define debugger_h
 
-template<typename Tp>
+template<typename Tp_>
 void printMat(const cv::Mat & mat)
 {
     std::cout << std::endl;
@@ -12,7 +12,7 @@ void printMat(const cv::Mat & mat)
     {
         for (int col(0); col < mat.size().width; col++)
         {
-            std::cout << mat.at<Tp>(row,col) << ' ';
+            std::cout << mat.at<Tp_>(row,col) << ' ';
         }
         std::cout << std::endl;
     }

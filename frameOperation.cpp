@@ -90,23 +90,23 @@ double calKeypointDist(const cv::KeyPoint & pt1, const cv::KeyPoint & pt2)
   return sqrt(pow((pt1.pt.x - pt2.pt.x),2) + pow((pt1.pt.y - pt2.pt.y),2));
 }
 
-int rmOutliner( std::vector<cv::KeyPoint> & inPointsKeyframe, std::vector<cv::KeyPoint> & inPointsNewframe, std::vector<std::vector<cv::DMatch>> & Matchs)
+//new frame is query frame old frame is train frame
+int rmOutliner( std::vector<cv::KeyPoint> & inKeypointsNewframe, std::vector<cv::KeyPoint> & inKeypointsOldframe, std::vector<std::vector<cv::DMatch>> & inMatchs)
 {
-  assert(!inPointsKeyframe.empty());
-  assert(!inPointsNewframe.empty());
+  if (inKeypointsOldframe.empty() | inKeypointsNewframe.empty()) return 0;
   int matchCount(0);
   std::vector<cv::KeyPoint> keyFrameNew, newFrameNew;
   std::vector<std::vector<cv::DMatch>> inMatchNew;
 
-  for (int inMatchCt(0); inMatchCt < Matchs.size(); inMatchCt++)
+  for (int inMatchCt(0); inMatchCt < inMatchs.size(); inMatchCt++)
   {
-    int newFrameKeypointNum = Matchs[inMatchCt][0].queryIdx;//get matched point from new frame
-    if ( calKeypointDist(inPointsKeyframe[inMatchCt], inPointsNewframe[newFrameKeypointNum]) <= 40)
+    int newFrameKeypointNum = inMatchs[inMatchCt][0].queryIdx;//get matched point from new frame
+    if ( calKeypointDist(inKeypointsOldframe[inMatchCt], inKeypointsNewframe[newFrameKeypointNum]) <= 40)
     {
-      keyFrameNew.push_back(inPointsNewframe[newFrameKeypointNum]);
-      newFrameNew.push_back(inPointsKeyframe[inMatchCt]);
+      keyFrameNew.push_back(inKeypointsNewframe[newFrameKeypointNum]);
+      newFrameNew.push_back(inKeypointsOldframe[inMatchCt]);
 
-      cv::DMatch newMatchEntry(matchCount, matchCount, Matchs[inMatchCt][0].distance);
+      cv::DMatch newMatchEntry(matchCount, matchCount, inMatchs[inMatchCt][0].distance);
       std::vector<cv::DMatch> matchTmp;
       matchTmp.push_back(newMatchEntry);
 
@@ -116,9 +116,9 @@ int rmOutliner( std::vector<cv::KeyPoint> & inPointsKeyframe, std::vector<cv::Ke
     }
   }
 
-  inPointsKeyframe = keyFrameNew;
-  inPointsNewframe = newFrameNew;
-  Matchs = inMatchNew;
+  inKeypointsOldframe = keyFrameNew;
+  inKeypointsNewframe = newFrameNew;
+  inMatchs = inMatchNew;
 
   return matchCount;
 }

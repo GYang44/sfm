@@ -27,6 +27,6 @@ cv::Mat vecKeypointToMatKeypoint(const std::vector<cv::KeyPoint> & vecKeypoints)
 double calKeypointDist(const cv::KeyPoint & pt1, const cv::KeyPoint & pt2);
 
 //remove outliners from both keypoint list and matcher
-int rmOutliner( std::vector<cv::KeyPoint> & inPointsKeyframe, std::vector<cv::KeyPoint> & inPointsNewframe, std::vector<std::vector<cv::DMatch>> & Matchs);
+int rmOutliner( std::vector<cv::KeyPoint> & inKeypointsNewframe, std::vector<cv::KeyPoint> & inKeypointsOldframe, std::vector<std::vector<cv::DMatch>> & inMatchs);
 
 #endif
