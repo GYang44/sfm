@@ -4,6 +4,7 @@
 #ifndef debugger_h
 #define debugger_h
 
+
 template<typename Tp_>
 void printMat(const cv::Mat & mat)
 {
@@ -18,5 +19,6 @@ void printMat(const cv::Mat & mat)
     }
     return;
 };
+
 
 #endif

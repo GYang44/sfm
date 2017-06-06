@@ -17,7 +17,6 @@
 #include <opencv2/xfeatures2d.hpp>
 
 #include <opencv2/sfm.hpp>
-#include <opencv2/sfm/robust.hpp>
 
 #include "environment.hpp"
 #include "glVisualizer.hpp"
@@ -99,26 +98,51 @@ void camPoseFromVideo()
         matcher -> knnMatchConvert(newMatchesGpu, newMatches, false);
 
         //remove outliner from matchvector
-        rmOutliner(*newFrameKeypoints, *oldFrameKeypoints, newMatches, 40);
+        int resudual = rmOutliner(*newFrameKeypoints, *oldFrameKeypoints, newMatches, 40);
 
-        //get keypoints that match
-        std::vector<cv::KeyPoint> queryVec, trainVec;
-        getMatchedKeypoints(*newFrameKeypoints, *oldFrameKeypoints, newMatches, queryVec, trainVec);
 
-        //format keypoints
-        cv::Mat queryMat, trainMat;
-        vecKeypointToMatKeypoint(queryMat, queryVec);
-        vecKeypointToMatKeypoint(trainMat, trainVec);
+        if (resudual > 7)
+        {
+          //get keypoints that match
+          std::vector<cv::KeyPoint> queryVec, trainVec;
+          getMatchedKeypoints(*newFrameKeypoints, *oldFrameKeypoints, newMatches, queryVec, trainVec);
 
-        //get fundamental matrix
-        cv::Mat F, inLiers;
-        cv::sfm::fundamentalFromCorrespondences8PointRobust(queryMat, trainMat, 40, F, inLiers, 0.02);
-        //printMat<double>(F);
+          //format keypoints
+          cv::Mat queryMat, trainMat;
+          vecKeypointToMatKeypoint(queryMat, queryVec);
+          vecKeypointToMatKeypoint(trainMat, trainVec);
 
+          //get fundamental matrix
+          cv::Mat F, inLiers;
+          cv::sfm::normalizedEightPointSolver(queryMat, trainMat, F);
+
+          //get essential matrix
+          cv::Mat E;
+          cv::sfm::essentialFromFundamental(F, workEnv.cameraMatrix, workEnv.cameraMatrix, E);
+
+          //get R T
+          std::vector<cv::Mat> Rs, ts;
+          cv::sfm::motionFromEssential(E, Rs, ts);
+          int solutionNum = cv::sfm::motionFromEssentialChooseSolution(Rs, ts, workEnv.cameraMatrix, queryMat(cv::Range(0,2),cv::Range(0,1)), workEnv.cameraMatrix, trainMat(cv::Range(0,2),cv::Range(0,1)));
+
+          if(solutionNum >= 0)
+          {
+            camera.updateRT(Rs[solutionNum],ts[solutionNum]);
+            camera.updateWrP(camera);
+          }
+          else
+          {
+            std::cout << "no solution found" << std::endl;
+          }
+        }
+        else
+        {
+          std::cout << "not enough matches found after remove outliner" << std::endl;
+        }
         //visualize matches
         cv::drawMatches(*newFrameImg, *newFrameKeypoints, *oldFrameImg, *oldFrameKeypoints, newMatches, drawFrame);
         cv::imshow("matches", drawFrame);
-        char inChar = cv::waitKey();
+        char inChar = cv::waitKey(10);
         if (inChar == 27) return;
       }
       //swap image keypoints and descriptor for previous frame
