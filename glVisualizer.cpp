@@ -52,7 +52,7 @@ void drawWorldCoornidates()
 		glVertex3f( 0.0f, 0.0f, 200.0f );
 		glVertex3f( 0.0f, 3.0f, 193.0f );
 		glVertex3f( 0.0f, 0.0f, 200.0f );
-		glVertex3f( 0.0f, -3.0f, 193.0f);
+		glVertex3f( 0.0f, -3.0f, 193.0f );
 	}
 	glEnd();
 	glRasterPos3f(0,0,200);
@@ -77,7 +77,7 @@ void drawPolyLine(const std::vector<arma::Mat<double>> & inLine)
 	return;
 }
 
-void draw3D_Object(const object3D & object)
+void draw3D_Object(const Object3D & object)
 {
 	glColor3f( 0.34f, 0.81f, 1.0f );//blue
 	glBegin( GL_LINES );
@@ -95,7 +95,7 @@ void draw3D_Object(const object3D & object)
 	glColor3f( 0.0f, 1.0f, 0.0f );//green
 	glBegin( GL_LINES );
 	{
-	// y-axis
+		// y-axis
 		glVertex3f( object.p(0,0),
 					object.p(1,0),
 					object.p(2,0));
@@ -188,14 +188,15 @@ void renderScene()
 	glRotatef(xRot, 1.0f, 0.0f, 0.0f);
 	glRotatef(yRot, 0.0f, 1.0f, 0.0f);
 	glRotatef(zRot, 0.0f, 0.0f, 1.0f);
+
 	//initial color
 	glClear( GL_COLOR_BUFFER_BIT );
-
 
 	//visual render opengl and opencv
 	drawWorldCoornidates();
 
 	//Draw camera in world coordinate
+
 	if (camera.isInitialed)
 	{
 		draw3D_Object(camera);
@@ -204,7 +205,7 @@ void renderScene()
 	}
 
 	// Restore transformations
-	glFlush();
+	//glFlush();
 	glutSwapBuffers();
 	glutPostRedisplay();
 	return;
@@ -220,25 +221,25 @@ void changeSize( GLsizei w, GLsizei h )
 {
 	GLfloat nRange = lScale * 20.0f;
     // Prevent a divide by zero
-    if(h == 0)
+  if(h == 0)
         h = 1;
 
-    // Set Viewport to window dimensions
-    glViewport(0, 0, w, h);
+  // Set Viewport to window dimensions
+  glViewport(0, 0, w, h);
 
-    // Reset projection matrix stack
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+  // Reset projection matrix stack
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
 
-    // Establish clipping volume (left, right, bottom, top, near, far)
-    if (w <= h)
-        glOrtho (-nRange, nRange, -nRange*h/w, nRange*h/w, -nRange, nRange);
-    else
-        glOrtho (-nRange*w/h, nRange*w/h, -nRange, nRange, -nRange, nRange);
+  // Establish clipping volume (left, right, bottom, top, near, far)
+  if (w <= h)
+		glOrtho (-nRange, nRange, -nRange*h/w, nRange*h/w, -nRange, nRange);
+  else
+    glOrtho (-nRange*w/h, nRange*w/h, -nRange, nRange, -nRange, nRange);
 
-    // Reset Model view matrix stack
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
+  // Reset Model view matrix stack
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
 	glutPostRedisplay();
 }
 

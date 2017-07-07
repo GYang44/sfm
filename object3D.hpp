@@ -5,7 +5,7 @@
 #ifndef OBJECT_3D_h
 #define OBJECT_3D_h
 
-class object3D
+class Object3D
 {
 public:
 	bool isInitialed = false;
@@ -14,14 +14,16 @@ public:
 	arma::Mat<double> t = arma::Mat<double>(3,1,arma::fill::zeros);
 	arma::Mat<double> wr = arma::Mat<double>(3,3,arma::fill::zeros);//rotation matrix to world
 	arma::Mat<double> p = arma::Mat<double>(3,1,arma::fill::zeros);//position relative to world
-	std::vector<arma::Mat<double>> trajactory;
 	//with known
-	void calWrP(const object3D & refObject)
+	void calWrP(const Object3D & refObject)
 	{
+		const arma::Mat<double> refWr (refObject.wr);
+		const arma::Mat<double> refP (refObject.p);
+
 		//wr = refAruco.wr * (refAruco.r)^(-1) * r
-		wr = refObject.wr * refObject.r.i() * r;
+		wr = refWr * refObject.r.i() * r;
 		//p = refAruco.wr^-1 ( (refAruco.r)^(-1) * (t - refAruco.t) - refAruco.p)
-		p = refObject.wr * (refObject.r.i() * (t - refObject.t)) + refObject.p;
+		p = refWr * (refObject.r.i() * (t - refObject.t)) + refP;
 
 		isInitialed = true;
 		return;
@@ -50,25 +52,42 @@ public:
 		return;
 	}
 
-	//Calculate new position and orientation relative to world coordinate system
-	void updateWrP(const object3D refObject)
-	{
-		wr = refObject.wr * r;
-		p = refObject.wr * t + refObject.p;
-		record();
-		return;
-	}
-	void iniWr()
-	{
-		wr(0,2) = 1;
-		wr(1,0) = 1;
-		wr(2,1) = 1;
-		record();
-	}
+};
+
+class CameraObj: public Object3D
+{
+public:
+	std::vector<arma::Mat<double>> trajactory;
+
 	void record()
 	{
 		trajactory.push_back(p);
 	}
+
+	arma::Mat<double> rectify(const arma::Mat<double> & r)
+	{
+		phi_x = 
+	}
+
+	//Calculate new position and orientation relative to world coordinate system
+	void calWrP()
+	{
+		const arma::Mat<double> refWr(wr);
+		const arma::Mat<double> refP(p);
+		wr = refWr * r;
+		p = refWr * t + refP;
+		record();
+		return;
+	}
+
+	void iniWr()
+	{
+		wr(0,0) = 1;
+		wr(1,1) = 1;
+		wr(2,2) = 1;
+		record();
+	}
+
 };
 
 #endif

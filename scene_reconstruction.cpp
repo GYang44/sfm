@@ -17,6 +17,7 @@
 #include <opencv2/xfeatures2d.hpp>
 
 #include <opencv2/sfm.hpp>
+#include <opencv2/sfm/robust.hpp>
 
 #include "environment.hpp"
 #include "glVisualizer.hpp"
@@ -26,12 +27,12 @@
 #include "debugger.hpp"
 
 //camera view point (angle)
-object3D camera;
+CameraObj camera;
 
 //global variable for view angle
-float xRot = -70.0f;
-float yRot = 0.0f;
-float zRot = 30.0f;
+float xRot = 30.0f;
+float yRot = 70.0f;
+float zRot = 0.0f;
 
 template<typename Tp_>
 void swapPointer(Tp_ *& ptLeft, Tp_ *& ptRight)
@@ -79,7 +80,7 @@ void camPoseFromVideo()
 
     // check if its the first frame;
     //if ((frameCount % 10 == 1))
-    if ((frameCount % 6 == 1))
+    if ((frameCount % 2 == 1))
     {
       newFrameGpu.upload(*newFrameImg);
       cv::cuda::cvtColor(newFrameGpu, newFrameGpuGray, CV_RGB2GRAY);
@@ -112,11 +113,14 @@ void camPoseFromVideo()
           vecKeypointToMatKeypoint(trainMat, trainVec);
 
           //get fundamental matrix
-          cv::Mat F, inLiers;
-          cv::sfm::normalizedEightPointSolver(trainMat, queryMat, F);
-          //printMat<double>(queryMat);
-          //printMat<double>(trainMat);
-          //printMat<float>(F);
+          cv::Mat F;
+          //cv::sfm::normalizedEightPointSolver(trainMat, queryMat, F);
+          const double max_error = 3, outliers_probability = 0.01;
+          std::vector<int> inliers;
+          //X_2 = R * X_1 + T
+          //x_2^T * F * x_1 = 0
+          //query ~ newFrame ~ x1, train ~ oldFrame ~ x2
+          cv::sfm::fundamentalFromCorrespondences8PointRobust(queryMat, trainMat, max_error, F, inliers, outliers_probability);
 
           //get essential matrix
           cv::Mat E;
@@ -125,12 +129,13 @@ void camPoseFromVideo()
           //get R T
           std::vector<cv::Mat> Rs, ts;
           cv::sfm::motionFromEssential(E, Rs, ts);
-          int solutionNum = cv::sfm::motionFromEssentialChooseSolution(Rs, ts, workEnv.cameraMatrix, trainMat(cv::Range(0,2),cv::Range(0,1)), workEnv.cameraMatrix, queryMat(cv::Range(0,2),cv::Range(0,1)));
+          int solutionNum = cv::sfm::motionFromEssentialChooseSolution(Rs, ts, workEnv.cameraMatrix, trainMat.colRange(cv::Range(inliers[0],inliers[0]+1)), workEnv.cameraMatrix, queryMat.colRange(cv::Range(inliers[0],inliers[0]+1)));
 
           if(solutionNum >= 0)
           {
+            //tweaked fo robust estimation
             camera.updateRT(Rs[solutionNum],ts[solutionNum]);
-            camera.updateWrP(camera);
+            camera.calWrP();
           }
           else
           {
