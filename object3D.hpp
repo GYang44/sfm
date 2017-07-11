@@ -97,9 +97,9 @@ public:
 	{
 		arma::Mat<double> X, Y, Z;
 		decomposeRotaiton(inMat, X, Y, Z);
-		if(mode & 0x001) X = X.t();
-		if(mode & 0x010) Y = Y.t();
-		if(mode & 0x100) X = X.t();
+		if(mode & 0x0001) X = X.t();
+		if(mode & 0x0002) Y = Y.t();
+		if(mode & 0x0004) Z = Z.t();
 		return Z*X*Y;
 	}
 
@@ -108,7 +108,7 @@ public:
 	{
 		const arma::Mat<double> refWr(wr);
 		const arma::Mat<double> refP(p);
-		r = revertRotation(r, 0x011);
+		r = revertRotation(r, 0x0004);
 		wr = refWr * r;
 		p = refWr * t + refP;
 		record();
