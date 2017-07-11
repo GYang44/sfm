@@ -1,5 +1,4 @@
 #include "frameOperation.hpp"
-#include "debugger.hpp"
 
 int forkeypointsMat(const std::vector<cv::KeyPoint> & inPointsKeyframe, const std::vector<cv::KeyPoint> & inPointsNewframe, const std::vector<std::vector<cv::DMatch>> & inMatch, std::vector<cv::KeyPoint> & outKeyPoints, const double & distanceThreshold)
 //create array of corresponding points for camera pose estimation
@@ -7,7 +6,7 @@ int forkeypointsMat(const std::vector<cv::KeyPoint> & inPointsKeyframe, const st
   outKeyPoints.clear();
   int matchedCount(0);
   //check distance
-  for (int inMatchCt(0); inMatchCt < inMatch.size(); inMatchCt++)
+  for (uint inMatchCt(0); inMatchCt < inMatch.size(); inMatchCt++)
   {
     int newFrameKeypointNum = inMatch[inMatchCt][0].queryIdx;//get matched point from new frame
     if ( calKeypointDist(inPointsKeyframe[inMatchCt], inPointsNewframe[newFrameKeypointNum]) <= distanceThreshold)
@@ -127,7 +126,7 @@ void getMatchedKeypoints(const std::vector<cv::KeyPoint> & query, const std::vec
 
   int queryIdx, trainIdx;
 
-  for(int matchIdx(0); matchIdx < matches.size(); matchIdx++)
+  for(uint matchIdx(0); matchIdx < matches.size(); matchIdx++)
   {
     trainIdx = matches[matchIdx][0].trainIdx;
     queryIdx = matches[matchIdx][0].queryIdx;

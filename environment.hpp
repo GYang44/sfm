@@ -15,13 +15,18 @@ public:
 	cv::VideoCapture video;
 	cv::Mat cameraMatrix;//K
 	cv::Mat cameraDistCoeffs;
+	cv::Point2d principlePoint;
+	double focalLength;
+
 	environment(std::string inFile);
 	void getRemap(const cv::Size2i & imageSize);
 	bool grab();
 	bool retrieve(cv::Mat & frame, int channel = 0);
+	void updateFocalPc();
 };
 
-environment::environment(std::string inFile)
+environment::environment(std::string inFile):
+principlePoint(0,0), focalLength(0)
 {
 	//xml file stroes specification of camera and video path
 	std::string cameraSpec, videoPath;
@@ -67,7 +72,7 @@ void environment::getRemap(const cv::Size2i & imageSize)
 	cv::initUndistortRectifyMap(cameraMatrix, cameraDistCoeffs, cv::Mat(),
 															getOptimalNewCameraMatrix(cameraMatrix, cameraDistCoeffs, imageSize, 1),
 															imageSize, CV_16SC2, map1, map2);
-
+	updateFocalPc();
 	return;
 };
 
@@ -80,6 +85,15 @@ bool environment::retrieve(cv::Mat & frame, int channel)
 	bool tmpBool = video.retrieve(frame, channel);
 	cv::remap(frame, frame, map1, map2, cv::INTER_LINEAR);
 	return tmpBool;
+};
+
+
+void environment::updateFocalPc()
+{
+	principlePoint.x = cameraMatrix.at<double>(0,2);
+	principlePoint.y = cameraMatrix.at<double>(1,2);
+	focalLength = cameraMatrix.at<double>(1,1);
+	return;
 };
 
 class arucoEnv : public environment
@@ -142,5 +156,6 @@ bool sfmEnv::sample(const uint sampleRate, const uint sampleNumber)
 	video.release();
 	return true;
 }
+
 
 #endif

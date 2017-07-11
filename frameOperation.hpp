@@ -5,6 +5,7 @@
 #include <opencv2/core/cuda.hpp>
 
 #include "frame.hpp"
+#include "debugger.hpp"
 
 #ifndef frm_opt_h
 #define frm_opt_h

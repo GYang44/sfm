@@ -1,24 +1,14 @@
 #include <iostream>
+#include <vector>
 #include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 
 #ifndef debugger_h
 #define debugger_h
 
-
 template<typename Tp_>
-void printMat(const cv::Mat & mat)
-{
-    std::cout << std::endl;
-    for (int row(0); row < mat.size().height; row++)
-    {
-        for (int col(0); col < mat.size().width; col++)
-        {
-            std::cout << mat.at<Tp_>(row,col) << ' ';
-        }
-        std::cout << std::endl;
-    }
-    return;
-};
+void printMat(const cv::Mat & mat);
 
+void trackMatches(cv::Mat & frame, const std::vector<cv::KeyPoint> & newKeyPoints, const std::vector<cv::KeyPoint> & oldKeyPoints);
 
 #endif

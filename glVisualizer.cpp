@@ -17,7 +17,7 @@ void drawWorldCoornidates()
 	glBegin( GL_LINES );
 	{
 		// x-axis
-		glVertex3f( -200.0f, 0.0f, 0.0f);
+		glVertex3f( -100.0f, 0.0f, 0.0f);
 		glVertex3f( 200.0f, 0.0f, 0.0f);
 		glVertex3f( 200.0f, 0.0f, 0.0f);
 		glVertex3f( 193.0f, 3.0f, 0.0f);
@@ -32,7 +32,7 @@ void drawWorldCoornidates()
 	glBegin( GL_LINES );
 	{
 		// y-axis
-		glVertex3f( 0.0f, -200.0f, 0.0f);
+		glVertex3f( 0.0f, -100.0f, 0.0f);
 		glVertex3f( 0.0f, 200.0f, 0.0f);
 		glVertex3f( 0.0f, 200.0f, 0.0f);
 		glVertex3f( 3.0f, 193.0f, 0.0f);
@@ -47,7 +47,7 @@ void drawWorldCoornidates()
 	glBegin( GL_LINES );
 	{
 		// z-axis (drawn in oppsite direction)
-		glVertex3f( 0.0f, 0.0f, -200.0f );
+		glVertex3f( 0.0f, 0.0f, -100.0f );
 		glVertex3f( 0.0f, 0.0f, 200.0f );
 		glVertex3f( 0.0f, 0.0f, 200.0f );
 		glVertex3f( 0.0f, 3.0f, 193.0f );

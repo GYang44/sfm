@@ -1,3 +1,4 @@
+#include <math.h>
 #include <assert.h>
 #include <armadillo>
 #include <opencv2/core.hpp>
@@ -64,9 +65,42 @@ public:
 		trajactory.push_back(p);
 	}
 
-	arma::Mat<double> rectify(const arma::Mat<double> & r)
+	void decomposeRotaiton(const arma::Mat<double> & inMat, arma::Mat<double> & outX, arma::Mat<double> & outY, arma::Mat<double> & outZ)
 	{
-		phi_x = 
+		outX.eye(3,3);
+		outY.eye(3,3);
+		outZ.eye(3,3);
+
+		double thetaX = atan2(inMat(2,1), inMat(2,2));
+		double thetaY = atan2(-inMat(2,0), sqrt(inMat(2,1)*inMat(2,1) + inMat(2,2)*inMat(2,2)));
+		double thetaZ = atan2(inMat(1,0), inMat(0,0));
+
+		outX(1,1) = cos(thetaX);
+		outX(1,2) = -sin(thetaX);
+		outX(2,1) = sin(thetaX);
+		outX(2,2) = cos(thetaX);
+
+		outY(0,0) = cos(thetaY);
+		outY(0,2) = sin(thetaY);
+		outY(2,0) = -sin(thetaY);
+		outY(2,2) = cos(thetaY);
+
+		outZ(0,0) = cos(thetaZ);
+		outZ(0,1) = -sin(thetaZ);
+		outZ(1,0) = sin(thetaZ);
+		outZ(1,1) = cos(thetaZ);
+
+	}
+
+	//mode 000 ~ 111(binary) flag for xyz respectively
+	arma::Mat<double> revertRotation(const arma::Mat<double> & inMat, const ushort & mode)
+	{
+		arma::Mat<double> X, Y, Z;
+		decomposeRotaiton(inMat, X, Y, Z);
+		if(mode & 0x001) X = X.t();
+		if(mode & 0x010) Y = Y.t();
+		if(mode & 0x100) X = X.t();
+		return Z*X*Y;
 	}
 
 	//Calculate new position and orientation relative to world coordinate system
@@ -74,6 +108,7 @@ public:
 	{
 		const arma::Mat<double> refWr(wr);
 		const arma::Mat<double> refP(p);
+		r = revertRotation(r, 0x011);
 		wr = refWr * r;
 		p = refWr * t + refP;
 		record();

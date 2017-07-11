@@ -80,7 +80,7 @@ void camPoseFromVideo()
 
     // check if its the first frame;
     //if ((frameCount % 10 == 1))
-    if ((frameCount % 2 == 1))
+    if ((frameCount % 6 == 1))
     {
       newFrameGpu.upload(*newFrameImg);
       cv::cuda::cvtColor(newFrameGpu, newFrameGpuGray, CV_RGB2GRAY);
@@ -94,12 +94,15 @@ void camPoseFromVideo()
 
       if (!(oldFrameImg -> empty()))
       {
+
         //find matches, newFrame is query, oldFrame is train
         matcher -> knnMatchAsync(*newFrameDescriptorsGpu, *oldFrameDescriptorsGpu, newMatchesGpu, 1);
         matcher -> knnMatchConvert(newMatchesGpu, newMatches, false);
 
         //remove outliner from matchvector
         int resudual = rmOutliner(*newFrameKeypoints, *oldFrameKeypoints, newMatches, 40);
+
+        drawFrame = *newFrameImg;
 
         if (resudual > 7)
         {
@@ -111,44 +114,28 @@ void camPoseFromVideo()
           cv::Mat queryMat, trainMat;
           vecKeypointToMatKeypoint(queryMat, queryVec);
           vecKeypointToMatKeypoint(trainMat, trainVec);
-
-          //get fundamental matrix
-          cv::Mat F;
-          //cv::sfm::normalizedEightPointSolver(trainMat, queryMat, F);
-          const double max_error = 3, outliers_probability = 0.01;
-          std::vector<int> inliers;
-          //X_2 = R * X_1 + T
-          //x_2^T * F * x_1 = 0
-          //query ~ newFrame ~ x1, train ~ oldFrame ~ x2
-          cv::sfm::fundamentalFromCorrespondences8PointRobust(queryMat, trainMat, max_error, F, inliers, outliers_probability);
+          cv::transpose(queryMat,queryMat);
+          cv::transpose(trainMat,trainMat);
 
           //get essential matrix
           cv::Mat E;
-          cv::sfm::essentialFromFundamental(F, workEnv.cameraMatrix, workEnv.cameraMatrix, E);
+          E = cv::findEssentialMat(queryMat, trainMat, workEnv.focalLength, workEnv.principlePoint, cv::RANSAC, 0.99, 20.0);
 
           //get R T
-          std::vector<cv::Mat> Rs, ts;
-          cv::sfm::motionFromEssential(E, Rs, ts);
-          int solutionNum = cv::sfm::motionFromEssentialChooseSolution(Rs, ts, workEnv.cameraMatrix, trainMat.colRange(cv::Range(inliers[0],inliers[0]+1)), workEnv.cameraMatrix, queryMat.colRange(cv::Range(inliers[0],inliers[0]+1)));
+          cv::Mat R,t;
+          cv::recoverPose(E, queryMat, trainMat, R, t, workEnv.focalLength, workEnv.principlePoint);
 
-          if(solutionNum >= 0)
-          {
-            //tweaked fo robust estimation
-            camera.updateRT(Rs[solutionNum],ts[solutionNum]);
-            camera.calWrP();
-          }
-          else
-          {
-            std::cout << "no solution found" << std::endl;
-          }
+          //estimate camera location
+          camera.updateRT(R,t);
+          camera.calWrP();
+
+          trackMatches(drawFrame, queryVec, trainVec);
         }
         else
         {
           std::cout << "not enough matches found after remove outliner" << std::endl;
         }
-        //visualize matches
-        cv::drawMatches(*newFrameImg, *newFrameKeypoints, *oldFrameImg, *oldFrameKeypoints, newMatches, drawFrame);
-        cv::imshow("matches", drawFrame);
+        cv::imshow("track", drawFrame);
         char inChar = cv::waitKey(10);
         if (inChar == 27) return;
       }
