@@ -114,32 +114,38 @@ void camPoseFromVideo()
           cv::Mat queryMat, trainMat;
           vecKeypointToMatKeypoint(queryMat, queryVec);
           vecKeypointToMatKeypoint(trainMat, trainVec);
-          //cv::transpose(queryMat,queryMat);
-          //cv::transpose(trainMat,trainMat);
+          cv::transpose(queryMat,queryMat);
+          cv::transpose(trainMat,trainMat);
 
           //get fundamental matrix
-          cv::Mat F, inLiers;
-          cv::sfm::normalizedEightPointSolver(trainMat, queryMat, F);
+          //cv::Mat F, inLiers;
+          //cv::sfm::normalizedEightPointSolver(trainMat, queryMat, F);
 
           //get essential matrix
           cv::Mat E;
-          cv::sfm::essentialFromFundamental(F, workEnv.cameraMatrix, workEnv.cameraMatrix, E);
+          //cv::sfm::essentialFromFundamental(F, workEnv.cameraMatrix, workEnv.cameraMatrix, E);
+          E = cv::findEssentialMat(queryMat, trainMat, workEnv.focalLength, workEnv.principlePoint, cv::RANSAC, 0.99, 20.0);
 
           //get R T
-          std::vector<cv::Mat> Rs, ts;
-          cv::sfm::motionFromEssential(E, Rs, ts);
-          int solutionNum = cv::sfm::motionFromEssentialChooseSolution(Rs, ts, workEnv.cameraMatrix, trainMat(cv::Range(0,2),cv::Range(0,1)), workEnv.cameraMatrix, queryMat(cv::Range(0,2),cv::Range(0,1)));
+          //std::vector<cv::Mat> Rs, ts;
+          //cv::sfm::motionFromEssential(E, Rs, ts);
+          //int solutionNum = cv::sfm::motionFromEssentialChooseSolution(Rs, ts, workEnv.cameraMatrix, trainMat(cv::Range(0,2),cv::Range(0,1)), workEnv.cameraMatrix, queryMat(cv::Range(0,2),cv::Range(0,1)));
+          cv::Mat R,t;
+          cv::recoverPose(E, queryMat, trainMat, R, t, workEnv.focalLength, workEnv.principlePoint);
 
-          if(solutionNum >= 0)
-          {
-            camera.updateRT(Rs[solutionNum],ts[solutionNum]);
-            camera.calWrP();
-          }
-          else
-          {
-            std::cout << "no solution found" << std::endl;
-          }
+          //if(solutionNum >= 0)
+          //{
+          //  camera.updateRT(Rs[solutionNum],ts[solutionNum]);
+          //  camera.calWrP();
+          //}
+          //else
+          //{
+          //  std::cout << "no solution found" << std::endl;
+          //}
           //draw movement of the featurepoints
+          camera.updateRT(R,t);
+          camera.calWrP();
+
           trackMatches(drawFrame, queryVec, trainVec);
         }
         else
