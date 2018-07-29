@@ -80,7 +80,7 @@ void camPoseFromVideo()
 
     // check if its the first frame;
     //if ((frameCount % 10 == 1))
-    if ((frameCount % 2 == 1))
+    if ((frameCount % 6 == 1))
     {
       newFrameGpu.upload(*newFrameImg);
       cv::cuda::cvtColor(newFrameGpu, newFrameGpuGray, CV_RGB2GRAY);
