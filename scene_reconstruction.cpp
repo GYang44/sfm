@@ -16,7 +16,6 @@
 #include <opencv2/features2d.hpp>
 #include <opencv2/xfeatures2d.hpp>
 
-#include <opencv2/sfm.hpp>
 #include <opencv2/sfm/robust.hpp>
 
 #include "environment.hpp"
@@ -30,8 +29,8 @@
 CameraObj camera;
 
 //global variable for view angle
-float xRot = 30.0f;
-float yRot = 70.0f;
+float xRot = 0.0f;
+float yRot = 0.0f;
 float zRot = 0.0f;
 
 template<typename Tp_>
@@ -183,7 +182,7 @@ int main(int argc, char* argv[])
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
   glutInitWindowSize (1280, 720);
   glutInitWindowPosition (0,0);
-  glutCreateWindow( "Live Show" );
+  glutCreateWindow( "Live Plot" );
   glutDisplayFunc( renderScene );
   glutReshapeFunc( changeSize );
 	glutKeyboardFunc( viewControl );

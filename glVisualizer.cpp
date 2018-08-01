@@ -46,7 +46,7 @@ void drawWorldCoornidates()
 	glColor3f( 1.0f, 0.0f, 0.0f );//red
 	glBegin( GL_LINES );
 	{
-		// z-axis (drawn in oppsite direction)
+		// z-axis 
 		glVertex3f( 0.0f, 0.0f, -100.0f );
 		glVertex3f( 0.0f, 0.0f, 200.0f );
 		glVertex3f( 0.0f, 0.0f, 200.0f );

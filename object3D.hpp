@@ -108,7 +108,6 @@ public:
 	{
 		const arma::Mat<double> refWr(wr);
 		const arma::Mat<double> refP(p);
-		r = revertRotation(r, 0x0002);
 		wr = refWr * r;
 		p = refWr * t + refP;
 		record();
