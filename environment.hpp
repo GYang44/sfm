@@ -12,7 +12,8 @@ class environment
 {
 public:
 	cv::Mat map1, map2;
-	cv::VideoCapture video;
+	cv::VideoCapture inVideo;
+	cv::VideoWriter outVideo;
 	cv::Mat cameraMatrix;//K
 	cv::Mat cameraDistCoeffs;
 	cv::Point2d principlePoint;
@@ -29,11 +30,12 @@ environment::environment(std::string inFile):
 principlePoint(0,0), focalLength(0)
 {
 	//xml file stroes specification of camera and video path
-	std::string cameraSpec, videoPath;
+	std::string cameraSpec, inVideoPath, outVideoPath;
 
 	cv::FileStorage fs(inFile, cv::FileStorage::READ);
 	fs["cameraSpec"] >> cameraSpec;
-	fs["videoFile"] >> videoPath;
+	fs["videoFile"] >> inVideoPath;
+	fs["video_output"] >> outVideoPath;
 	fs.release();
 
 	//get camera matrix
@@ -45,21 +47,28 @@ principlePoint(0,0), focalLength(0)
 	cv::Size imageSize;
 	fs["image_width"] >> imageSize.width;
 	fs["image_height"] >> imageSize.height;
+	
 
 	fs.release();
 
 	getRemap(imageSize);
 
-	//get video
-	if (videoPath.size() != 0)
+	//get input video
+	if (inVideoPath.size() != 0)
 	{
-		std::cout << "opening file: " << videoPath << std::endl;
-		video.open(videoPath);
+		std::cout << "opening file: " << inVideoPath << std::endl;
+		inVideo.open(inVideoPath);
 	}
 	else
 	{
 		std::cout << "opening from camera 0." << std::endl;
-		video.open(0);
+		inVideo.open(0);
+	}
+
+	//prepare output video
+	if (outVideoPath.size() != 0)
+	{
+		//todo implement video writer
 	}
 
 	return;
