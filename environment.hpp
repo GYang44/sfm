@@ -23,6 +23,7 @@ public:
 	void getRemap(const cv::Size2i & imageSize);
 	bool grab();
 	bool retrieve(cv::Mat & frame, int channel = 0);
+	bool store(const cv::Mat & frame);
 	void updateFocalPc();
 };
 
@@ -34,8 +35,8 @@ principlePoint(0,0), focalLength(0)
 
 	cv::FileStorage fs(inFile, cv::FileStorage::READ);
 	fs["cameraSpec"] >> cameraSpec;
-	fs["videoFile"] >> inVideoPath;
-	fs["video_output"] >> outVideoPath;
+	fs["inputVideoFile"] >> inVideoPath;
+	fs["outputVideoFile"] >> outVideoPath;
 	fs.release();
 
 	//get camera matrix
@@ -68,7 +69,13 @@ principlePoint(0,0), focalLength(0)
 	//prepare output video
 	if (outVideoPath.size() != 0)
 	{
-		//todo implement video writer
+		//todo remove status check
+		int codec = outVideo.fourcc('M', 'J', 'P', 'G');
+		outVideo.open(outVideoPath, codec, 25.0, imageSize);
+	}
+	else
+	{
+		outVideo.release();
 	}
 
 	return;
@@ -86,16 +93,28 @@ void environment::getRemap(const cv::Size2i & imageSize)
 };
 
 bool environment::grab(){
-	return video.grab();
+	return inVideo.grab();
 };
 
 bool environment::retrieve(cv::Mat & frame, int channel)
 {
-	bool tmpBool = video.retrieve(frame, channel);
+	bool tmpBool = inVideo.retrieve(frame, channel);
 	cv::remap(frame, frame, map1, map2, cv::INTER_LINEAR);
 	return tmpBool;
 };
 
+bool environment::store(const cv::Mat & frame)
+{
+	if (outVideo.isOpened())
+	{
+		outVideo.write(frame);
+		return true;
+	}
+	else
+	{
+		return false;
+	};
+};
 
 void environment::updateFocalPc()
 {
@@ -150,9 +169,9 @@ bool sfmEnv::sample(const uint sampleRate, const uint sampleNumber)
 
 	cv::Mat newFrame;
 
-	for(uint framCounter(0), sampleCounter(1);( video.grab() & (sampleCounter <= sampleNumber));++framCounter)
+	for(uint framCounter(0), sampleCounter(1);( inVideo.grab() & (sampleCounter <= sampleNumber));++framCounter)
 	{
-		video.retrieve(newFrame);
+		inVideo.retrieve(newFrame);
 		if (framCounter % sampleRate == 1)
 		{
 			imgList << "IMG" << std::to_string(framCounter) << ".png" << std::endl;
@@ -162,7 +181,7 @@ bool sfmEnv::sample(const uint sampleRate, const uint sampleNumber)
 		}
 	}
 	imgList.close();
-	video.release();
+	inVideo.release();
 	return true;
 }
 

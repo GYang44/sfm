@@ -29,9 +29,9 @@
 CameraObj camera;
 
 //global variable for view angle
-float xRot = 0.0f;
+float xRot = 110.0f;
 float yRot = 0.0f;
-float zRot = 0.0f;
+float zRot = 110.0f;
 
 template<typename Tp_>
 void swapPointer(Tp_ *& ptLeft, Tp_ *& ptRight)
@@ -152,6 +152,7 @@ void camPoseFromVideo()
           std::cout << "not enough matches found after remove outliner" << std::endl;
         }
         cv::imshow("track", drawFrame);
+        workEnv.store(drawFrame);
         char inChar = cv::waitKey(10);
         if (inChar == 27) return;
       }

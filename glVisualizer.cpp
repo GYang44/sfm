@@ -1,6 +1,6 @@
 #include "glVisualizer.hpp"
 
-GLfloat lScale(10.0f);
+GLfloat lScale(5.0f), wScale(40.0f);
 
 void drawString(const std::string & inString)
 {
@@ -17,45 +17,51 @@ void drawWorldCoornidates()
 	glBegin( GL_LINES );
 	{
 		// x-axis
-		glVertex3f( -100.0f, 0.0f, 0.0f);
-		glVertex3f( 200.0f, 0.0f, 0.0f);
-		glVertex3f( 200.0f, 0.0f, 0.0f);
-		glVertex3f( 193.0f, 3.0f, 0.0f);
-		glVertex3f( 200.0f, 0.0f, 0.0f);
-		glVertex3f( 193.0f,-3.0f, 0.0f);
+		glVertex3f( -wScale, 0.0f, 0.0f);
+		glVertex3f(  wScale, 0.0f, 0.0f);
+
+		// x direction indicator
+		glVertex3f( wScale, 0.0f, 0.0f);
+		glVertex3f( wScale - 3.0f, 3.0f, 0.0f);
+		glVertex3f( wScale, 0.0f, 0.0f);
+		glVertex3f( wScale - 3.0f, -3.0f, 0.0f);
 	}
 	glEnd();
-	glRasterPos3f(200,0,0);
+	glRasterPos3f(wScale,0,0);
 	glutBitmapCharacter(GLUT_BITMAP_9_BY_15, 'X');
 
 	glColor3f( 0.0f, 1.0f, 0.0f );//green
 	glBegin( GL_LINES );
 	{
 		// y-axis
-		glVertex3f( 0.0f, -100.0f, 0.0f);
-		glVertex3f( 0.0f, 200.0f, 0.0f);
-		glVertex3f( 0.0f, 200.0f, 0.0f);
-		glVertex3f( 3.0f, 193.0f, 0.0f);
-		glVertex3f( 0.0f, 200.0f, 0.0f);
-		glVertex3f( -3.0f, 193.0f, 0.0f);
+		glVertex3f( 0.0f, -wScale, 0.0f);
+		glVertex3f( 0.0f, wScale, 0.0f);
+
+		// y direction indicator
+		glVertex3f( 0.0f, wScale, 0.0f);
+		glVertex3f( 3.0f, wScale - 3.0f, 0.0f);
+		glVertex3f( 0.0f, wScale, 0.0f);
+		glVertex3f( -3.0f, wScale - 3.0f, 0.0f);
 	}
 	glEnd();
-	glRasterPos3f(0,200,0);
+	glRasterPos3f(0,wScale,0);
 	glutBitmapCharacter(GLUT_BITMAP_9_BY_15, 'Y');
 
 	glColor3f( 1.0f, 0.0f, 0.0f );//red
 	glBegin( GL_LINES );
 	{
 		// z-axis 
-		glVertex3f( 0.0f, 0.0f, -100.0f );
-		glVertex3f( 0.0f, 0.0f, 200.0f );
-		glVertex3f( 0.0f, 0.0f, 200.0f );
-		glVertex3f( 0.0f, 3.0f, 193.0f );
-		glVertex3f( 0.0f, 0.0f, 200.0f );
-		glVertex3f( 0.0f, -3.0f, 193.0f );
+		glVertex3f( 0.0f, 0.0f, -wScale );
+		glVertex3f( 0.0f, 0.0f, wScale );
+
+		// z direction indicator
+		glVertex3f( 0.0f, 0.0f, wScale );
+		glVertex3f( 0.0f, 3.0f, wScale - 3.0f );
+		glVertex3f( 0.0f, 0.0f, wScale );
+		glVertex3f( 0.0f, -3.0f, wScale - 3.0f );
 	}
 	glEnd();
-	glRasterPos3f(0,0,200);
+	glRasterPos3f(0,0,wScale);
 	glutBitmapCharacter(GLUT_BITMAP_9_BY_15, 'Z');
 
 }
@@ -219,10 +225,9 @@ void setupRC()
 
 void changeSize( GLsizei w, GLsizei h )
 {
-	GLfloat nRange = lScale * 20.0f;
-    // Prevent a divide by zero
-  if(h == 0)
-        h = 1;
+	GLfloat nRange = 5 * 20.0f;
+	// Prevent a divide by zero
+	if(h == 0) h = 1;
 
   // Set Viewport to window dimensions
   glViewport(0, 0, w, h);
