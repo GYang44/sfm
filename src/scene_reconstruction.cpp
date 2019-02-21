@@ -96,14 +96,15 @@ void camPoseFromVideo()
 
         //find matches, newFrame is query, oldFrame is train
         matcher -> knnMatchAsync(*newFrameDescriptorsGpu, *oldFrameDescriptorsGpu, newMatchesGpu, 1);
+        matcher -> clear();
         matcher -> knnMatchConvert(newMatchesGpu, newMatches, false);
 
         //remove outliner from matchvector
-        int resudual = rmOutliner(*newFrameKeypoints, *oldFrameKeypoints, newMatches, 40);
+        int residual = rmOutliner(*newFrameKeypoints, *oldFrameKeypoints, newMatches, 40);
 
         drawFrame = *newFrameImg;
 
-        if (resudual > 7)
+        if (residual > 7)
         {
           //get keypoints that match
           std::vector<cv::KeyPoint> queryVec, trainVec;
