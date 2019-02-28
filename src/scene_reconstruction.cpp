@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cmath>
 #include <thread>
 
 #include <opencv2/sfm.hpp>
@@ -96,7 +97,6 @@ void camPoseFromVideo()
 
         //find matches, newFrame is query, oldFrame is train
         matcher -> knnMatchAsync(*newFrameDescriptorsGpu, *oldFrameDescriptorsGpu, newMatchesGpu, 1);
-        matcher -> clear();
         matcher -> knnMatchConvert(newMatchesGpu, newMatches, false);
 
         //remove outliner from matchvector
@@ -175,7 +175,7 @@ void camPoseFromVideo()
 int main(int argc, char* argv[])
 {
   //object3D camera;
-  camera.iniWr();
+  camera.iniWr(M_PI/2,M_PI,0);
   camera.isInitialed = true;
 
   std::thread camEst (camPoseFromVideo);

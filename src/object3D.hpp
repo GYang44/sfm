@@ -53,6 +53,35 @@ public:
 		return;
 	}
 
+	void composeRotation(const double & roll, const double & pitch, const double & yaw, arma::Mat<double> & outRotation)
+	{
+		arma::Mat<double> matRoll(3,3,arma::fill::zeros);
+		arma::Mat<double> matPitch(3,3,arma::fill::zeros);
+		arma::Mat<double> matYaw(3,3,arma::fill::zeros);
+
+		matRoll(0,0) = 1;
+		matRoll(1,1) = cos(roll);
+		matRoll(1,2) = -sin(roll);
+		matRoll(2,1) = sin(roll);
+		matRoll(2,2) = cos(roll);
+		
+		matPitch(0,0) = cos(pitch);
+		matPitch(0,2) = sin(pitch);
+		matPitch(1,1) = 1;
+		matPitch(2,0) = -sin(pitch);
+		matPitch(2,2) = cos(pitch);
+		
+		matYaw(0,0) = cos(yaw);
+		matYaw(0,1) = -sin(yaw);
+		matYaw(1,0) = sin(yaw);
+		matYaw(1,1) = cos(yaw);
+		matYaw(2,2) = 1;
+
+		outRotation = matRoll * matPitch * matYaw;
+
+		return;
+	}
+
 };
 
 class CameraObj: public Object3D
@@ -114,11 +143,9 @@ public:
 		return;
 	}
 
-	void iniWr()
+	void iniWr(const double & roll=0, const double & pitch=0, const double & yaw=0)
 	{
-		wr(0,0) = 1;
-		wr(1,1) = 1;
-		wr(2,2) = 1;
+		composeRotation(roll, pitch, yaw, this -> wr);
 		record();
 	}
 
