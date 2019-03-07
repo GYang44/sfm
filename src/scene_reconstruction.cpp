@@ -50,23 +50,28 @@ void camPoseFromVideo()
   //sfmEnviroment wkEnv(std::string("../setting.xml"));
   environment workEnv("../setting.xml");
   //create new window set device
-  cv::cuda::setDevice(0);
+  //cv::cuda::setDevice(0);
 
   //create feature detector
-  cv::cuda::SURF_CUDA CudaDetector(2000);
+  //cv::cuda::SURF_CUDA CudaDetector(2000);
+  cv::Ptr<cv::xfeatures2d::SURF>CpuDetector = cv::xfeatures2d::SURF::create(2000);
 
   //tmp variable for frame handling
-  cv::cuda::GpuMat newFrameGpu, newFrameGpuGray;
+  //cv::cuda::GpuMat newFrameGpu, newFrameGpuGray;
+  cv::Mat newFrameCpu, newFrameCpuGray;
   cv::Mat *newFrameImg = new cv::Mat;
   cv::Mat *oldFrameImg = new cv::Mat;
 
   //feature Detector
-  cv::Ptr<cv::cuda::DescriptorMatcher> matcher = cv::cuda::DescriptorMatcher::createBFMatcher(cv::NORM_L2);
+  //cv::Ptr<cv::cuda::DescriptorMatcher> matcher = cv::cuda::DescriptorMatcher::createBFMatcher(cv::NORM_L2);
+  cv::Ptr<cv::BFMatcher> matcher(new cv::BFMatcher(cv::NORM_L2));
 
   cv::Mat drawFrame;
 
-  cv::cuda::GpuMat *oldFrameDescriptorsGpu = new cv::cuda::GpuMat;
-  cv::cuda::GpuMat *newFrameDescriptorsGpu = new cv::cuda::GpuMat;
+  //cv::cuda::GpuMat *oldFrameDescriptorsGpu = new cv::cuda::GpuMat;
+  //cv::cuda::GpuMat *newFrameDescriptorsGpu = new cv::cuda::GpuMat;
+  cv::Mat *oldFrameDescriptorCpu = new cv::Mat();
+  cv::Mat *newFrameDescriptorCpu = new cv::Mat();
   std::vector<cv::KeyPoint> *newFrameKeypoints = new std::vector<cv::KeyPoint>;
   std::vector<cv::KeyPoint> *oldFrameKeypoints = new std::vector<cv::KeyPoint>;
 
@@ -82,22 +87,27 @@ void camPoseFromVideo()
     //if ((frameCount % 10 == 1))
     if ((frameCount % 6 == 1))
     {
-      newFrameGpu.upload(*newFrameImg);
-      cv::cuda::cvtColor(newFrameGpu, newFrameGpuGray, CV_RGB2GRAY);
+      //newFrameGpu.upload(*newFrameImg);
+      newFrameCpu = *newFrameImg;
+      //cv::cuda::cvtColor(newFrameGpu, newFrameGpuGray, CV_RGB2GRAY);
+      cv::cvtColor(newFrameCpu, newFrameCpuGray,CV_RGB2GRAY);
 
       //detect keypoints and compute descriptors
-      CudaDetector(newFrameGpuGray, cv::cuda::GpuMat(), *newFrameKeypoints, *newFrameDescriptorsGpu);
+      //CudaDetector(newFrameGpuGray, cv::cuda::GpuMat(), *newFrameKeypoints, *newFrameDescriptorsGpu);
+      CpuDetector -> detect(newFrameCpuGray, *newFrameKeypoints);
+      CpuDetector -> compute(newFrameCpuGray, *newFrameKeypoints, *newFrameDescriptorCpu);
 
       //matches
-      cv::cuda::GpuMat newMatchesGpu;
+      //cv::cuda::GpuMat newMatchesGpu;
       std::vector<std::vector<cv::DMatch>> newMatches;
 
       if (!(oldFrameImg -> empty()))
       {
 
         //find matches, newFrame is query, oldFrame is train
-        matcher -> knnMatchAsync(*newFrameDescriptorsGpu, *oldFrameDescriptorsGpu, newMatchesGpu, 1);
-        matcher -> knnMatchConvert(newMatchesGpu, newMatches, false);
+        //matcher -> knnMatchAsync(*newFrameDescriptorsGpu, *oldFrameDescriptorsGpu, newMatchesGpu, 1);
+        //matcher -> knnMatchConvert(newMatchesGpu, newMatches, false);
+        matcher -> knnMatch(*newFrameDescriptorCpu, *oldFrameDescriptorCpu, newMatches, 1);
 
         //remove outliner from matchvector
         int residual = rmOutliner(*newFrameKeypoints, *oldFrameKeypoints, newMatches, 40);
@@ -164,13 +174,16 @@ void camPoseFromVideo()
       //swap image keypoints and descriptor for previous frame
       swapPointer(oldFrameImg, newFrameImg);
       swapPointer(oldFrameKeypoints, newFrameKeypoints);
-      swapPointer(oldFrameDescriptorsGpu, newFrameDescriptorsGpu);
+      //swapPointer(oldFrameDescriptorsGpu, newFrameDescriptorsGpu);
+      swapPointer(oldFrameDescriptorCpu, newFrameDescriptorCpu);
     }
   }
   if (newFrameImg != NULL) delete newFrameImg;
   if (oldFrameImg != NULL) delete oldFrameImg;
-  if (newFrameDescriptorsGpu != NULL) delete newFrameDescriptorsGpu;
-  if (oldFrameDescriptorsGpu != NULL) delete oldFrameDescriptorsGpu;
+  //if (newFrameDescriptorsGpu != NULL) delete newFrameDescriptorsGpu;
+  //if (oldFrameDescriptorsGpu != NULL) delete oldFrameDescriptorsGpu;
+  if (newFrameDescriptorCpu != NULL) delete newFrameDescriptorCpu;
+  if (oldFrameDescriptorCpu != NULL) delete oldFrameDescriptorCpu;
   if (newFrameKeypoints != NULL) delete newFrameKeypoints;
   if (oldFrameKeypoints != NULL) delete oldFrameKeypoints;
   return;
