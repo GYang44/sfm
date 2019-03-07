@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include <ctime>
 
 #ifndef ENVIRONMENT_H
 #define ENVIRONMENT_H

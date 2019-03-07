@@ -46,6 +46,8 @@ void swapPointer(Tp_ *& ptLeft, Tp_ *& ptRight)
 //void camPoseFromVideo(environment & workEnv)
 void camPoseFromVideo()
 {
+  clock_t time_req;
+  time_req = clock();
   // Read input parameters
   //sfmEnviroment wkEnv(std::string("../setting.xml"));
   environment workEnv("../setting.xml");
@@ -186,6 +188,8 @@ void camPoseFromVideo()
   if (oldFrameDescriptorCpu != NULL) delete oldFrameDescriptorCpu;
   if (newFrameKeypoints != NULL) delete newFrameKeypoints;
   if (oldFrameKeypoints != NULL) delete oldFrameKeypoints;
+  time_req = clock()- time_req;
+  std::cout << (float)time_req/CLOCKS_PER_SEC << std::endl;
   return;
 }
 
