@@ -20,6 +20,6 @@ void trackMatches(cv::Mat & frame, const std::vector<cv::KeyPoint> & newKeyPoint
 {
   for(uint i(0); i < newKeyPoints.size(); i++)
   {
-    cv::line(frame, newKeyPoints[i].pt, oldKeyPoints[i].pt, cv::Scalar(94,165,255,255));
+    cv::line(frame, newKeyPoints[i].pt, oldKeyPoints[i].pt, cv::Scalar(94,165,255,255),5);
   }
 }

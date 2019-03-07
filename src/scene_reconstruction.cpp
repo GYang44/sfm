@@ -153,8 +153,12 @@ void camPoseFromVideo()
           std::cout << "not enough matches found after remove outliner" << std::endl;
         }
         cv::imshow("track", drawFrame);
+
+        //output video
         workEnv.store(drawFrame);
-        char inChar = cv::waitKey(10);
+        //output location
+        std::cout << camera.p(0,0) << ',' << camera.p(1,0) << ',' << camera.p(2,0) << std::endl;
+        char inChar = cv::waitKey(1);
         if (inChar == 27) return;
       }
       //swap image keypoints and descriptor for previous frame
