@@ -13,6 +13,7 @@ include_directories(
 	/usr/include
 	/usr/local/include
 	/usr/include/eigen3
+	/usr/local/include/opencv4
 )
 
 set(projectName "sfmOut")

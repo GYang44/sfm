@@ -92,7 +92,7 @@ void camPoseFromVideo()
       //newFrameGpu.upload(*newFrameImg);
       newFrameCpu = *newFrameImg;
       //cv::cuda::cvtColor(newFrameGpu, newFrameGpuGray, CV_RGB2GRAY);
-      cv::cvtColor(newFrameCpu, newFrameCpuGray,CV_RGB2GRAY);
+      cv::cvtColor(newFrameCpu, newFrameCpuGray, cv::COLOR_RGB2GRAY);
 
       //detect keypoints and compute descriptors
       //CudaDetector(newFrameGpuGray, cv::cuda::GpuMat(), *newFrameKeypoints, *newFrameDescriptorsGpu);
