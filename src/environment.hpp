@@ -35,9 +35,12 @@ principlePoint(0,0), focalLength(0)
 	std::string cameraSpec, inVideoPath, outVideoPath;
 
 	cv::FileStorage fs(inFile, cv::FileStorage::READ);
+	std::cout << "Reading: " << inFile << std::endl;
 	fs["cameraSpec"] >> cameraSpec;
 	fs["inputVideoFile"] >> inVideoPath;
 	fs["outputVideoFile"] >> outVideoPath;
+	std::cout << "- Input Video: " << inVideoPath << std::endl;
+	std::cout << "- Output Video: " << outVideoPath << std::endl;
 	fs.release();
 
 	//get camera matrix
@@ -49,8 +52,6 @@ principlePoint(0,0), focalLength(0)
 	cv::Size imageSize;
 	fs["image_width"] >> imageSize.width;
 	fs["image_height"] >> imageSize.height;
-	
-
 	fs.release();
 
 	getRemap(imageSize);
@@ -66,6 +67,7 @@ principlePoint(0,0), focalLength(0)
 		std::cout << "opening from camera 0." << std::endl;
 		inVideo.open(0);
 	}
+	std::cout << "Video is open" << std::endl;
 
 	//prepare output video
 	if (outVideoPath.size() != 0)
@@ -78,7 +80,6 @@ principlePoint(0,0), focalLength(0)
 	{
 		outVideo.release();
 	}
-
 	return;
 }
 
