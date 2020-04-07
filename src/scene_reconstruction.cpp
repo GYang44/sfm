@@ -1,8 +1,8 @@
-#define CERES_FOUND true
 
 #include <iostream>
 #include <fstream>
 #include <string>
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <thread>
 
@@ -50,7 +50,7 @@ void camPoseFromVideo()
   time_req = clock();
   // Read input parameters
   //sfmEnviroment wkEnv(std::string("../setting.xml"));
-  environment workEnv("../setting.xml");
+  environment workEnv("..\..\setting.xml");
   //create new window set device
   //cv::cuda::setDevice(0);
 
@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
   glutCreateWindow( "Live Plot" );
   glutDisplayFunc( renderScene );
   glutReshapeFunc( changeSize );
-	glutKeyboardFunc( viewControl );
+  glutKeyboardFunc( viewControl );
   setupRC();
   glutMainLoop();
   camEst.join();
