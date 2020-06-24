@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <opencv_storage>
-	<cameraSpec>../../../Media/M100CamCaliberation/outCamera.xml</cameraSpec>
+	<cameraSpec>../../Media/M100CamCaliberation/outCamera.xml</cameraSpec>
 	<videoFile2>../../../Media/M100/DJI_0001.MOV</videoFile2>
-	<inputVideoFile>D:/Archive/Images/IIT/2017/06/set2/DJI_0004.MOV</inputVideoFile>
-	<outputVideoFile>../../../Media/out.avi</outputVideoFile>
+	<inputVideoFile>D:/Archive/Images/IIT/2017/06/set2/DJI_0001.MOV</inputVideoFile>
+	<outputVideoFile>../../Media/out.avi</outputVideoFile>
 	<positionLogFile></positionLogFile>
 	<arucoSize>85</arucoSize>
 	<samplePath>../../../sfm/samples/</samplePath>

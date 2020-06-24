@@ -122,6 +122,6 @@ if(WIN32)
 	target_link_libraries( ${projectName}
 		${OpenCV_LIBS} 
 		armadillo
-		freeglut
+		freeglutd
 	)
 endif(WIN32)
